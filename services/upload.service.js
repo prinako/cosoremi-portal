@@ -7,6 +7,15 @@ const { httpError } = require('../utils/http');
 const root = path.join(__dirname, '..', 'public', 'uploads');
 const allowedFolders = new Set(['blog', 'gallery', 'pages', 'branding']);
 
+function uploadStorageError(error) {
+  if (error?.code === 'EACCES' || error?.code === 'EROFS')
+    return httpError(
+      503,
+      'O armazenamento de imagens não está gravável. Verifique as permissões do volume de uploads.'
+    );
+  return error;
+}
+
 exports.save = async (file, folder) => {
   if (!file) return null;
   if (!allowedFolders.has(folder))
@@ -51,8 +60,14 @@ exports.save = async (file, folder) => {
   }
 
   const filename = `${randomUUID()}.webp`;
-  await fs.mkdir(path.join(root, folder), { recursive: true });
-  await fs.writeFile(path.join(root, folder, filename), buffer, { flag: 'wx' });
+  try {
+    await fs.mkdir(path.join(root, folder), { recursive: true });
+    await fs.writeFile(path.join(root, folder, filename), buffer, {
+      flag: 'wx',
+    });
+  } catch (error) {
+    throw uploadStorageError(error);
+  }
   return `/uploads/${folder}/${filename}`;
 };
 

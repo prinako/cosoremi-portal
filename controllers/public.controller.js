@@ -20,6 +20,7 @@ function mixColor(hex, target, amount) {
 
 exports.locals = async (req, res, next) => {
   const values = await settings.read(req.app.locals.db);
+  res.set('Cache-Control', 'no-store, max-age=0');
   Object.assign(res.locals, {
     settings: values,
     pageTitle: values.site_name || 'COSOREMI',
@@ -37,7 +38,7 @@ exports.theme = (req, res) => {
   const secondary = safeColor(res.locals.settings.secondary_color, '#f5c84b');
 
   res.type('text/css');
-  res.set('Cache-Control', 'public, max-age=60, must-revalidate');
+  res.set('Cache-Control', 'no-store, max-age=0');
   res.send(`:root {
   --primary-color: ${primary};
   --secondary-color: ${secondary};
