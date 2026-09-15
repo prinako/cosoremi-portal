@@ -97,6 +97,9 @@ test(
     await t.test(
       'public routes, SEO, headers and protected routes',
       async () => {
+        const ready = await request(app).get('/health').expect(200);
+        assert.deepEqual(ready.body, { status: 'ok' });
+        assert.equal(ready.headers['set-cookie'], undefined);
         for (const route of [
           '/',
           '/sobre-nos',
