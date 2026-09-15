@@ -8,7 +8,8 @@ const safeColor = (value, fallback) =>
   /^#[0-9a-fA-F]{6}$/.test(value || '') ? value.toLowerCase() : fallback;
 
 function mixColor(hex, target, amount) {
-  const parseHex = (value) => [1, 3, 5].map((i) => parseInt(value.slice(i, i + 2), 16));
+  const parseHex = (value) =>
+    [1, 3, 5].map((i) => parseInt(value.slice(i, i + 2), 16));
   const source = parseHex(hex);
   const destination = parseHex(target);
   const mixed = source.map((channel, index) =>
@@ -33,10 +34,13 @@ exports.locals = async (req, res, next) => {
 
 exports.theme = (req, res) => {
   const primary = safeColor(res.locals.settings.primary_color, '#0f5f46');
-  const secondary = safeColor(res.locals.settings.secondary_color, '#f5c84b');
+  const secondary = safeColor(
+    res.locals.settings.secondary_color,
+    '#f5c84b'
+  );
 
   res.type('text/css');
-  res.set('Cache-Control', 'public, max-age=60, must-revalidate');
+  res.set('Cache-Control', 'no-store, max-age=0');
   res.send(`:root {
   --primary-color: ${primary};
   --secondary-color: ${secondary};
