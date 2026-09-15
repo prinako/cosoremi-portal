@@ -1,10 +1,22 @@
 :root {
   --theme-primary: var(--primary-color, #0f5f46);
   --theme-secondary: var(--secondary-color, #f5c84b);
-  --theme-primary-deep: color-mix(in srgb, var(--theme-primary) 72%, #000000 28%);
-  --theme-accent: color-mix(in srgb, var(--theme-primary) 62%, var(--theme-secondary) 38%);
+  --theme-primary-deep: color-mix(
+    in srgb,
+    var(--theme-primary) 72%,
+    #000000 28%
+  );
+  --theme-accent: color-mix(
+    in srgb,
+    var(--theme-primary) 62%,
+    var(--theme-secondary) 38%
+  );
 
-  --gradient-brand: linear-gradient(135deg, var(--theme-secondary), var(--theme-accent));
+  --gradient-brand: linear-gradient(
+    135deg,
+    var(--theme-secondary),
+    var(--theme-accent)
+  );
   --gradient-hero-overlay:
     linear-gradient(
       90deg,
