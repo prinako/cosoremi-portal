@@ -13,7 +13,10 @@ COPY . .
 COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/cosoremi-entrypoint
 RUN mkdir -p public/uploads/blog public/uploads/gallery public/uploads/pages \
     && chown -R node:node /app
-ENV NODE_ENV=development PORT=3000
+ENV NODE_ENV=development \
+    PORT=3000 \
+    NPM_CONFIG_UPDATE_NOTIFIER=false \
+    PRISMA_HIDE_UPDATE_MESSAGE=true
 USER node
 EXPOSE 3000 5555
 HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=3 \

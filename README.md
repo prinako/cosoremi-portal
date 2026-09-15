@@ -205,6 +205,8 @@ Abra `http://localhost:3000` e `/admin`. O serviço `app` usa Node 24, roda como
 
 O Compose de desenvolvimento usa credenciais locais próprias e sobrescreve explicitamente `DATABASE_URL`, independentemente do `.env` utilizado fora do Docker. PostgreSQL não publica porta no host. `DEV_PORT`, `STUDIO_PORT` e `DEV_SESSION_SECRET` são opcionais. Os padrões são `3000`, `5555` e um segredo exclusivamente de desenvolvimento. Nunca exponha essa configuração à Internet.
 
+Se configurar o administrador inicial, use um endereço completo, como `admin@cosoremi.org`; endereços incompletos como `usuario@dominio.x` são rejeitados. `ADMIN_EMAIL` e `ADMIN_PASSWORD` devem ser definidos juntos. Uma configuração inválida interrompe o app antes de iniciar e o seed informa qual campo deve ser corrigido, sem registrar a senha.
+
 ### Código, dependências e uploads
 
 - `.:/app`: alterações no código aparecem no contêiner; Nodemon reinicia JavaScript. EJS/CSS são atualizados nas próximas requisições.

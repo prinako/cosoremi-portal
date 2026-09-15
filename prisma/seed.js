@@ -2,8 +2,9 @@ require('dotenv').config({ quiet: true });
 const db = require('../config/database');
 const bcrypt = require('bcrypt');
 const slug = require('../utils/slug');
-const { parse, password } = require('../validators/content');
+const { password } = require('../validators/content');
 const { z } = require('zod');
+const { httpError } = require('../utils/http');
 const settings = {
   site_name: 'COSOREMI',
   site_description:
@@ -88,7 +89,46 @@ const areas = [
     'Acolhimento e encaminhamento para redes de proteção.',
   ],
 ];
+
+function readAdministrator() {
+  const hasAdminEmail = Boolean(process.env.ADMIN_EMAIL);
+  const hasAdminPassword = Boolean(process.env.ADMIN_PASSWORD);
+  if (hasAdminEmail !== hasAdminPassword) {
+    throw new Error(
+      'ADMIN_EMAIL e ADMIN_PASSWORD devem ser informados juntos.'
+    );
+  }
+  if (!hasAdminEmail) return null;
+
+  const emailResult = z
+    .email()
+    .max(254)
+    .safeParse(process.env.ADMIN_EMAIL.toLowerCase());
+  if (!emailResult.success)
+    throw httpError(422, 'ADMIN_EMAIL deve ser um endereço de e-mail válido.');
+  const passwordResult = password.safeParse(process.env.ADMIN_PASSWORD);
+  if (!passwordResult.success)
+    throw httpError(422, 'ADMIN_PASSWORD deve ter de 12 a 72 bytes UTF-8.');
+  const nameResult = z
+    .string()
+    .trim()
+    .min(2)
+    .max(120)
+    .safeParse(process.env.ADMIN_NAME || 'Administração COSOREMI');
+  if (!nameResult.success)
+    throw httpError(422, 'ADMIN_NAME deve ter de 2 a 120 caracteres.');
+
+  return {
+    email: emailResult.data,
+    password: passwordResult.data,
+    name: nameResult.data,
+  };
+}
+
 async function seed() {
+  // Validate optional account configuration before making database changes.
+  const administrator = readAdministrator();
+
   // Idempotent: never overwrite content or credentials edited by administrators.
   for (const [key, value] of Object.entries(settings))
     await db.setting.upsert({
@@ -120,16 +160,8 @@ async function seed() {
       create: { name, slug: slug(name) },
       update: {},
     });
-  if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
-    const email = parse(
-      z.email().max(254),
-      process.env.ADMIN_EMAIL.toLowerCase()
-    );
-    const validPassword = parse(password, process.env.ADMIN_PASSWORD);
-    const name = parse(
-      z.string().trim().min(2).max(120),
-      process.env.ADMIN_NAME || 'Administração COSOREMI'
-    );
+  if (administrator) {
+    const { email, password: validPassword, name } = administrator;
     await db.user.upsert({
       where: { email },
       create: {
@@ -147,9 +179,17 @@ async function seed() {
     );
 }
 seed()
-  .catch(() => {
+  .catch((error) => {
+    const safeMessage =
+      error?.status === 422
+        ? error.message
+        : error?.message ===
+            'ADMIN_EMAIL e ADMIN_PASSWORD devem ser informados juntos.'
+          ? error.message
+          : 'Não foi possível gravar os dados iniciais no PostgreSQL.';
+    console.error(`Falha no seed: ${safeMessage}`);
     console.error(
-      'Falha no seed. Verifique o banco e as variáveis de administrador (senha: 12 caracteres, até 72 bytes).'
+      'Revise DATABASE_URL, ADMIN_EMAIL e ADMIN_NAME. A senha deve ter de 12 a 72 bytes.'
     );
     process.exitCode = 1;
   })

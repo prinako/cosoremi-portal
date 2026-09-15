@@ -16,7 +16,10 @@ RUN npm run db:generate \
     && npm cache clean --force
 
 FROM base AS production
-ENV NODE_ENV=production PORT=3000
+ENV NODE_ENV=production \
+    PORT=3000 \
+    NPM_CONFIG_UPDATE_NOTIFIER=false \
+    PRISMA_HIDE_UPDATE_MESSAGE=true
 LABEL org.opencontainers.image.title="COSOREMI Portal" \
       org.opencontainers.image.source="https://github.com/prinako/cosoremi-portal"
 COPY --from=dependencies /app/node_modules ./node_modules
