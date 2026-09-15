@@ -24,6 +24,8 @@ module.exports = function createApp({ db, env, sessionStore } = {}) {
       strictTransportSecurity: app.locals.env.production ? undefined : false,
     })
   );
+  // Readiness must work without sessions, seeded content or rate-limit state.
+  app.get('/health', require('./controllers/health.controller').health);
   app.use(
     '/uploads',
     express.static(path.join(__dirname, 'public/uploads'), {
