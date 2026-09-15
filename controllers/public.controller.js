@@ -35,10 +35,7 @@ exports.locals = async (req, res, next) => {
 
 exports.theme = (req, res) => {
   const primary = safeColor(res.locals.settings.primary_color, '#0f5f46');
-  const secondary = safeColor(
-    res.locals.settings.secondary_color,
-    '#f5c84b'
-  );
+  const secondary = safeColor(res.locals.settings.secondary_color, '#f5c84b');
 
   res.type('text/css');
   res.set('Cache-Control', 'no-store, max-age=0');
