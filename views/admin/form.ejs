@@ -38,6 +38,7 @@
 </select>
 <label for="publishedAt">Publicação (UTC; deixe vazio para publicar agora)</label>
 <input id="publishedAt" name="publishedAt" type="datetime-local" value="<%= item.publishedAt ? item.publishedAt.toISOString().slice(0,16) : '' %>">
+<p>Uma data futura agenda a publicação. Para mostrar o artigo imediatamente, selecione “Publicado” e deixe este campo vazio.</p>
 <% } %>
 <% if(resource === 'work-areas') { %>
 <label for="displayOrder">Ordem de exibição</label>

@@ -17,7 +17,11 @@
       <tr>
         <td><%= item.title || item.name %></td>
         <td>
-          <%= item.status || (item.published !== undefined ? (item.published ? 'Publicado' : 'Oculto') : item.active !== undefined ? (item.active ? 'Ativo' : 'Inativo') : '—') %>
+          <% if (item.status === 'PUBLISHED' && item.publishedAt && item.publishedAt > new Date()) { %>
+            Agendado para <%= item.publishedAt.toLocaleString('pt-BR', { timeZone: 'UTC' }) %> UTC
+          <% } else { %>
+            <%= item.status || (item.published !== undefined ? (item.published ? 'Publicado' : 'Oculto') : item.active !== undefined ? (item.active ? 'Ativo' : 'Inativo') : '—') %>
+          <% } %>
         </td>
         <td>
           <a class="btn" href="/admin/<%= resource %>/<%= item.id %>/edit"

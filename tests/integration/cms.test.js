@@ -239,6 +239,8 @@ test(
           data: { publishedAt: new Date(Date.now() + 86400000) },
         });
         await request(app).get(`/blog/${post.slug}`).expect(404);
+        const scheduledList = await editor.get('/admin/posts').expect(200);
+        assert.match(scheduledList.text, /Agendado para/);
         await db.post.update({
           where: { id: post.id },
           data: { status: 'ARCHIVED' },
