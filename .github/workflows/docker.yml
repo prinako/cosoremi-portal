@@ -1,0 +1,161 @@
+name: Containers
+
+on:
+  push:
+    branches: [main, test, dev]
+  pull_request:
+    branches: [main, v*.*]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: containers-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  validate:
+    name: Application and Compose
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: cosoremi_test
+          POSTGRES_USER: cosoremi
+          POSTGRES_PASSWORD: ci_database_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cosoremi -d cosoremi_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://cosoremi:ci_database_only@localhost:5432/cosoremi_test
+      TEST_DATABASE_URL: postgresql://cosoremi:ci_database_only@localhost:5432/cosoremi_test
+      SESSION_SECRET: ci-only-session-secret-at-least-32-characters
+      APP_URL: https://cosoremi.example
+      POSTGRES_DB: cosoremi_test
+      POSTGRES_USER: cosoremi
+      POSTGRES_PASSWORD: ci_database_only
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+      - run: npm run format:check
+      - run: npm test
+      - run: npm run db:deploy
+      - run: npm run db:seed
+      - run: npm run test:integration
+      - name: Validate both Compose files
+        run: |
+          docker compose -f docker-compose.dev.yml config --quiet
+          docker compose -f docker-compose.prod.yml config --quiet
+
+  images:
+    name: Build and smoke test (${{ matrix.target }})
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: dev
+            dockerfile: Dockerfile.dev
+          - target: prod
+            dockerfile: Dockerfile
+    env:
+      COSOREMI_IMAGE: cosoremi-portal:prod
+      DATABASE_URL: postgresql://cosoremi:ci_database_only@postgres:5432/cosoremi_test
+      SESSION_SECRET: ci-only-session-secret-at-least-32-characters
+      APP_URL: https://cosoremi.example
+      POSTGRES_DB: cosoremi_test
+      POSTGRES_USER: cosoremi
+      POSTGRES_PASSWORD: ci_database_only
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v4
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          load: true
+          push: false
+          tags: cosoremi-portal:${{ matrix.target }}
+          cache-from: type=gha,scope=${{ matrix.target }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.target }}
+      - name: Check production image boundary
+        if: matrix.target == 'prod'
+        run: |
+          docker run --rm --entrypoint sh cosoremi-portal:prod -ec '
+            test "$(id -u)" != 0
+            test ! -f /app/.env
+            test ! -d /app/.git
+            test ! -d /app/tests
+            test ! -d /app/node_modules/nodemon
+            test ! -d /app/node_modules/supertest
+            test ! -d /app/node_modules/prettier
+            node -e "require(\"@prisma/client\"); require(\"bcrypt\"); require(\"sharp\")"
+          '
+      - name: Start stack and check readiness
+        run: |
+          docker compose -f docker-compose.${{ matrix.target }}.yml up -d --no-build --wait --wait-timeout 180
+          curl --fail --silent --show-error http://localhost:3000/health
+          docker compose -f docker-compose.${{ matrix.target }}.yml exec -T app npm run db:seed
+          curl --fail --silent --show-error http://localhost:3000/ > /dev/null
+      - name: Show diagnostics
+        if: failure()
+        run: docker compose -f docker-compose.${{ matrix.target }}.yml logs --no-color
+      - name: Remove disposable CI stack
+        if: always()
+        run: docker compose -f docker-compose.${{ matrix.target }}.yml down --volumes
+
+  publish:
+    name: Publish validated production image
+    needs: [validate, images]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/prinako/cosoremi-portal
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ github.sha }}
+      - name: Publish
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=prod
+          cache-to: type=gha,mode=max,scope=prod
