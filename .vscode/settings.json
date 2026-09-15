@@ -1,0 +1,4 @@
+{
+  "ejs.delimiters": "%",       // Change default delimiter
+  "ejs.includePaths": ["./views"] // Add custom include paths
+}
