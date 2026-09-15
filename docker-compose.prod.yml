@@ -1,0 +1,60 @@
+name: cosoremi-prod
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    expose:
+      - '5432'
+    networks:
+      - database
+
+  app:
+    image: ${COSOREMI_IMAGE:-ghcr.io/prinako/cosoremi-portal:latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL with postgres as hostname}
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET}
+      APP_URL: ${APP_URL:?Set the public HTTPS APP_URL}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+    # A host reverse proxy terminates TLS; the Node port stays local by default.
+    ports:
+      - '${APP_BIND_ADDRESS:-127.0.0.1}:${PORT:-3000}:3000'
+    volumes:
+      - uploads_prod:/app/public/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - web
+      - database
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    stop_grace_period: 15s
+
+networks:
+  web:
+  database:
+    internal: true
+
+volumes:
+  postgres_prod_data:
+  uploads_prod:
