@@ -1,0 +1,22 @@
+# syntax=docker/dockerfile:1
+FROM node:24-bookworm-slim
+WORKDIR /app
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+RUN npm run db:generate
+COPY . .
+COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/cosoremi-entrypoint
+RUN mkdir -p public/uploads/blog public/uploads/gallery public/uploads/pages \
+    && chown -R node:node /app
+ENV NODE_ENV=development PORT=3000
+USER node
+EXPOSE 3000 5555
+HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=3 \
+    CMD ["node", "docker/healthcheck.cjs"]
+ENTRYPOINT ["cosoremi-entrypoint"]
+CMD ["npm", "run", "dev"]
