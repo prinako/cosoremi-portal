@@ -1,0 +1,31 @@
+<%- include('../partials/header') %>
+<article>
+  <header class="page-hero">
+    <div class="container">
+      <h1><%= item.title %></h1>
+      <p><%= item.summary %></p>
+      <% if(item.publishedAt) { %>
+      <p>
+        <time datetime="<%= item.publishedAt.toISOString() %>"
+          ><%= item.publishedAt.toLocaleDateString('pt-BR',{timeZone:'UTC'})
+          %></time
+        >
+        ·
+        <%= item.author.name %><% if(item.category) { %>
+        ·
+        <%= item.category.name %><% } %>
+      </p>
+      <% } %>
+    </div>
+  </header>
+  <div class="section container">
+    <% if(image) { %><img
+      class="article-image"
+      src="<%= image %>"
+      alt="<%= item.title %>"
+      loading="lazy"
+    /><% } %>
+    <div class="prose"><%= item.content %></div>
+  </div>
+</article>
+<%- include('../partials/footer') %>

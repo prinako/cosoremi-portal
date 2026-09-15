@@ -1,0 +1,24 @@
+<%- include('../partials/header') %>
+<section class="page-hero">
+<div class="container">
+<h1><%= item.title %>
+</h1>
+</div>
+</section>
+<section class="section container">
+<% if(type === 'blog') { %>
+<form method="get" class="filter-form">
+<label for="category">Categoria</label>
+<select id="category" name="category">
+<option value="">Todas</option>
+<% categories.forEach(c => { %>
+<option value="<%= c.slug %>" <%= selectedCategory === c.slug ? 'selected' : '' %>><%= c.name %>
+</option>
+<% }) %>
+</select>
+<button class="btn" type="submit">Filtrar</button>
+</form>
+<% } %>
+<%- include('../partials/cards', {items,field:config.field,base:type === 'gallery' ? '' : config.base}) %>
+<%- include('../partials/pagination') %>
+</section><%- include('../partials/footer') %>

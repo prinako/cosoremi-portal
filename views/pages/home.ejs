@@ -1,149 +1,65 @@
 <%- include('../partials/header') %>
-
-<section class="hero hero-home">
+<section class="hero section-deep">
   <div class="hero-media placeholder-image">
-    <!-- Coloque uma foto real em public/images/hero-belem.jpg para substituir o gradiente. -->
-    <img src="/images/hero-belem.jpg" alt="Orla de Belém com atmosfera amazônica ao pôr do sol" loading="eager">
+    <% if(item.heroImage) { %><img
+      src="<%= item.heroImage %>"
+      alt=""
+      fetchpriority="high"
+    /><% } %>
   </div>
   <div class="hero-overlay"></div>
   <div class="container hero-content">
-    <p class="eyebrow">Portal de turismo da Amazônia urbana</p>
-    <h1>Descubra Belém do Pará</h1>
-    <p>Viva a mistura de cultura, floresta amazônica, sabores intensos, rios, história e hospitalidade paraense.</p>
+    <p class="eyebrow"><%= settings.site_name %></p>
+    <h1><%= item.title %></h1>
+    <p><%= item.subtitle %></p>
     <div class="hero-actions">
-      <a class="btn btn-primary" href="/atracoes">Conhecer Atrações</a>
-      <a class="btn btn-secondary" href="/gastronomia">Ver Gastronomia</a>
+      <a class="btn btn-primary" href="/emergencia"><%= settings.help_cta %></a
+      ><a class="btn btn-secondary" href="/doar"><%= settings.donate_cta %></a>
     </div>
   </div>
 </section>
-
-<section class="section">
-  <div class="container split">
-    <div>
-      <p class="eyebrow">Bem-vindo</p>
-      <h2>Uma cidade onde o rio, a floresta e a cultura se encontram</h2>
-    </div>
-    <p>Belém é porta de entrada para experiências amazônicas autênticas. Entre mercados históricos, igrejas, parques, ilhas e cozinhas cheias de personalidade, cada roteiro revela uma cidade viva, sensorial e acolhedora.</p>
-  </div>
+<section class="section container">
+  <div class="prose"><%= item.content %></div>
+  <% if(about) { %>
+  <h2><%= about.title %></h2>
+  <p><%= about.subtitle %></p>
+  <a class="btn" href="/sobre-nos">Conheça o COSOREMI</a><% } %>
 </section>
-
 <section class="section section-soft">
   <div class="container">
     <div class="section-heading">
-      <p class="eyebrow">Destaques</p>
-      <h2>Atrações imperdíveis</h2>
-      <a href="/atracoes">Ver todas</a>
+      <h2>Linhas de trabalho</h2>
+      <a href="/linhas-de-trabalho">Todas as linhas</a>
     </div>
-    <div class="card-grid">
-      <% attractions.forEach((item) => { %>
-        <article class="image-card">
-          <div class="card-image placeholder-image">
-            <img src="/images/<%= item.image %>" alt="<%= item.name %> em Belém do Pará" loading="lazy">
-          </div>
-          <div class="card-body">
-            <h3><%= item.name %></h3>
-            <p><%= item.description %></p>
-          </div>
-        </article>
-      <% }) %>
-    </div>
+    <%- include('../partials/cards',{items:areas,field:'image',base:'/linhas-de-trabalho'}) %>
   </div>
 </section>
-
-<section class="section">
-  <div class="container">
-    <div class="section-heading">
-      <p class="eyebrow">Sabores</p>
-      <h2>Gastronomia paraense</h2>
-      <a href="/gastronomia">Explorar sabores</a>
-    </div>
-    <div class="card-grid">
-      <% foods.forEach((food) => { %>
-        <article class="food-card">
-          <div class="card-image placeholder-image">
-            <img src="/images/<%= food.image %>" alt="<%= food.name %> da gastronomia paraense" loading="lazy">
-          </div>
-          <div class="card-body">
-            <h3><%= food.name %></h3>
-            <p><%= food.reason %></p>
-          </div>
-        </article>
-      <% }) %>
-    </div>
+<section class="section container">
+  <div class="section-heading">
+    <h2>Notícias e histórias</h2>
+    <a href="/blog">Todas as publicações</a>
   </div>
+  <%- include('../partials/cards',{items:posts,field:'featuredImage',base:'/blog'}) %>
 </section>
-
-<section class="section section-deep">
-  <div class="container">
-    <div class="section-heading light">
-      <p class="eyebrow">Por que visitar</p>
-      <h2>Belém surpreende em cada detalhe</h2>
-    </div>
-    <div class="feature-grid">
-      <article>
-        <span>01</span>
-        <h3>Cultura amazônica</h3>
-        <p>Manifestações populares, fé, música, artesanato e uma identidade profundamente ligada aos rios.</p>
-      </article>
-      <article>
-        <span>02</span>
-        <h3>Sabores únicos</h3>
-        <p>Tucupi, jambu, açaí, frutas regionais e receitas que contam histórias de família e território.</p>
-      </article>
-      <article>
-        <span>03</span>
-        <h3>História viva</h3>
-        <p>Fachadas, praças, museus e monumentos revelam séculos de encontros culturais.</p>
-      </article>
-    </div>
-  </div>
-</section>
-
-<section class="section">
-  <div class="container highlights">
-    <div>
-      <p class="eyebrow">Roteiro rápido</p>
-      <h2>Highlights turísticos</h2>
-    </div>
-    <ul class="check-list">
-      <li>Ver o nascer do movimento no Mercado Ver-o-Peso.</li>
-      <li>Caminhar pela Estação das Docas no fim da tarde.</li>
-      <li>Experimentar tacacá, açaí paraense e frutas amazônicas.</li>
-      <li>Conhecer a Cidade Velha e a história da fundação de Belém.</li>
-      <li>Fazer um passeio fluvial para sentir a vida ribeirinha.</li>
-    </ul>
-  </div>
-</section>
-
 <section class="section section-soft">
   <div class="container">
     <div class="section-heading">
-      <p class="eyebrow">Quem visita recomenda</p>
-      <h2>Impressões de viajantes</h2>
+      <h2>Atividades recentes</h2>
+      <a href="/galeria">Ver galeria</a>
     </div>
-    <div class="testimonial-grid">
-      <blockquote>
-        <p>“Belém tem uma energia que mistura mercado, rio, música e comida de um jeito inesquecível.”</p>
-        <cite>Visitante de Recife</cite>
-      </blockquote>
-      <blockquote>
-        <p>“A gastronomia foi o ponto alto da viagem. Cada prato parecia uma descoberta.”</p>
-        <cite>Visitante de São Paulo</cite>
-      </blockquote>
-      <blockquote>
-        <p>“A cidade é histórica, intensa e muito acolhedora. O pôr do sol na baía vale a viagem.”</p>
-        <cite>Visitante de Brasília</cite>
-      </blockquote>
-    </div>
+    <%- include('../partials/cards',{items:gallery,field:'image',base:''}) %>
   </div>
 </section>
-
 <section class="cta-section">
   <div class="container">
-    <h2>Pronto para planejar sua viagem?</h2>
-    <p>Monte seu roteiro com atrações, sabores, eventos e dicas essenciais para aproveitar Belém com tranquilidade.</p>
-    <a class="btn btn-primary" href="/dicas-de-viagem">Ver dicas de viagem</a>
+    <h2><%= settings.donate_cta %></h2>
+    <p class="prose"><%= settings.donation_text %></p>
+    <a class="btn btn-primary" href="/doar"><%= settings.donate_cta %></a>
   </div>
 </section>
-
+<section class="section container">
+  <h2><%= settings.help_cta %></h2>
+  <p class="prose"><%= settings.emergency_text %></p>
+  <a class="btn btn-primary" href="/emergencia">Informações de emergência</a>
+</section>
 <%- include('../partials/footer') %>

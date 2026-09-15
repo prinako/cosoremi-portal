@@ -1,0 +1,27 @@
+<%- include('partials/header') %>
+<h1>Mensagens</h1>
+<div class="table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Assunto</th>
+        <th>Recebida</th>
+        <th>Estado</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% items.forEach(item => { %>
+      <tr>
+        <td><%= item.name %></td>
+        <td><%= item.subject %></td>
+        <td><%= item.createdAt.toLocaleString('pt-BR') %></td>
+        <td><%= item.read ? 'Lida' : 'Não lida' %></td>
+        <td><a class="btn" href="/admin/contacts/<%= item.id %>">Abrir</a></td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<%- include('../partials/pagination') %><%- include('partials/footer') %>

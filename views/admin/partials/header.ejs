@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Administração | COSOREMI</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="admin-top">
+    <a class="brand" href="/admin">COSOREMI · Gestão</a>
+    <a href="/">Ver site</a>
+    <span><%= user.name %></span>
+    <form action="/admin/logout" method="post">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <button class="btn" type="submit">Sair</button>
+    </form>
+  </header>
+  <div class="admin-layout">
+    <nav class="admin-sidebar" aria-label="Administração">
+      <a href="/admin">Painel</a>
+      <% const links = [
+        ['posts', 'Publicações'], ['categories', 'Categorias'], ['gallery', 'Galeria']
+      ];
+      if (user.role !== 'EDITOR') links.push(
+        ['pages', 'Páginas'], ['work-areas', 'Linhas de trabalho'],
+        ['settings', 'Configurações'], ['contacts', 'Mensagens']
+      );
+      if (user.role === 'SUPER_ADMIN') links.push(['users', 'Usuários']);
+      links.forEach(([path, label]) => { %>
+        <a href="/admin/<%= path %>"><%= label %></a>
+      <% }) %>
+    </nav>
+    <main id="conteudo" class="admin-main">

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title><!= status !> | COSOREMI</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <main class="container section">
+      <h1><%= status %></h1>
+      <p role="alert"><%= message %></p>
+      <p>
+        Se estava preenchendo um formulário, volte à página anterior para
+        revisar os campos.
+      </p>
+      <a class="btn btn-primary" href="/">Página inicial</a>
+      <a class="btn" href="/admin">Administração</a>
+    </main>
+  </body>
+</html>

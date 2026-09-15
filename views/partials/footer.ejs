@@ -1,33 +1,53 @@
-  </main>
-  <footer class="site-footer">
-    <div class="container footer-grid">
-      <div>
-        <a class="brand footer-brand" href="/">
-          <span class="brand-mark">VB</span>
-          <span>Visite Belém</span>
-        </a>
-        <p>Guia turístico moderno para descobrir a capital paraense, seus sabores, rios, história e cultura amazônica.</p>
-      </div>
-      <div>
-        <h2>Explore</h2>
-        <ul>
-          <li><a href="/atracoes">Atrações</a></li>
-          <li><a href="/gastronomia">Gastronomia</a></li>
-          <li><a href="/eventos">Eventos</a></li>
-          <li><a href="/dicas-de-viagem">Dicas de viagem</a></li>
-        </ul>
-      </div>
-      <div>
-        <h2>Informações</h2>
-        <p>Endereço: Centro de Atendimento ao Turista, Belém - PA.</p>
-        <p>E-mail: turismo@visitebelem.example</p>
-        <p>Redes sociais: @visitebelem</p>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>&copy; <%= new Date().getFullYear() %> Visite Belém. Conteúdo turístico informativo.</p>
-    </div>
-  </footer>
-  <script src="/js/main.js"></script>
+</main>
+<footer class="site-footer">
+<div class="container footer-grid">
+<div>
+<h2><%= settings.site_name || 'COSOREMI' %>
+</h2>
+<p><%= settings.site_description %>
+</p>
+</div>
+<div>
+<h2>Participe</h2>
+<ul>
+<li>
+<a href="/doar"><%= settings.donate_cta || 'Quero ajudar' %>
+</a>
+</li>
+<li>
+<a href="/emergencia"><%= settings.help_cta || 'Preciso de ajuda' %>
+</a>
+</li>
+<li>
+<a href="/contato">Fale conosco</a>
+</li>
+</ul>
+</div>
+<div>
+<h2>Contato</h2>
+<% ['phone','institutional_email','address','office_hours'].forEach(key => { if(settings[key]) { %>
+<p><%= settings[key] %>
+</p>
+<% } }) %>
+<% if(settings.whatsapp) { %>
+<p>
+<a href="https://wa.me/<%= settings.whatsapp %>" rel="noopener noreferrer">WhatsApp</a>
+</p>
+<% } %>
+<% ['facebook','instagram','youtube'].forEach(key => { if(settings[key]) { %>
+<p>
+<a href="<%= settings[key] %>" rel="noopener noreferrer"><%= key %>
+</a>
+</p>
+<% } }) %>
+</div>
+</div>
+<div class="footer-bottom">
+<p>&copy; <%= new Date().getFullYear() %> <%= settings.site_name || 'COSOREMI' %>
+</p>
+</div>
+</footer>
+<script src="/js/main.js" defer>
+</script>
 </body>
 </html>

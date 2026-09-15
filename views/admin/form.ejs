@@ -1,0 +1,78 @@
+<%- include('partials/header') %>
+<h1><%= item.id ? 'Editar' : 'Criar' %> · <%= spec.label %>
+</h1>
+<form method="post" enctype="multipart/form-data" class="contact-form cms-form">
+<input type="hidden" name="_csrf" value="<%= csrf %>">
+<% const fields = {
+ pages:[['title','Título',180],['slug','Endereço (slug)',180],['subtitle','Subtítulo',500],['content','Conteúdo',100000,'textarea']],
+ posts:[['title','Título',180],['slug','Endereço (slug)',180],['summary','Resumo',500,'textarea'],['content','Conteúdo',100000,'textarea']],
+ categories:[['name','Nome',120],['slug','Endereço (slug)',180]],
+ 'work-areas':[['title','Título',180],['slug','Endereço (slug)',180],['summary','Resumo',500,'textarea'],['content','Conteúdo',100000,'textarea']],
+ gallery:[['title','Título',180],['description','Descrição',2000,'textarea'],['category','Categoria',120]]
+ }[resource]; fields.forEach(([name,label,max,type]) => { %>
+<label for="<%= name %>"><%= label %>
+</label>
+<% if(type === 'textarea') { %>
+<textarea id="<%= name %>" name="<%= name %>" maxlength="<%= max %>" rows="<%= name === 'content' ? 14 : 4 %>" <%= name === 'content' && resource !== 'pages' ? 'required' : '' %>><%= item[name] || '' %></textarea>
+<% } else { %>
+<input id="<%= name %>" name="<%= name %>" maxlength="<%= max %>" value="<%= item[name] || '' %>" <%= ['title','name','slug'].includes(name) ? 'required' : '' %>>
+<% } }) %>
+<% if(resource !== 'categories') { %>
+<p>O conteúdo é texto simples. Separe os parágrafos com uma linha em branco.</p>
+<% } %>
+<% if(resource === 'posts') { %>
+<label for="status">Estado</label>
+<select id="status" name="status">
+<% [['DRAFT','Rascunho'],['PUBLISHED','Publicado'],['ARCHIVED','Arquivado']].forEach(([value,label]) => { %>
+<option value="<%= value %>" <%= item.status === value ? 'selected' : '' %>><%= label %>
+</option>
+<% }) %>
+</select>
+<label for="categoryId">Categoria</label>
+<select id="categoryId" name="categoryId">
+<option value="">Sem categoria</option>
+<% categories.forEach(c => { %>
+<option value="<%= c.id %>" <%= item.categoryId === c.id ? 'selected' : '' %>><%= c.name %>
+</option>
+<% }) %>
+</select>
+<label for="publishedAt">Publicação (UTC; deixe vazio para publicar agora)</label>
+<input id="publishedAt" name="publishedAt" type="datetime-local" value="<%= item.publishedAt ? item.publishedAt.toISOString().slice(0,16) : '' %>">
+<% } %>
+<% if(resource === 'work-areas') { %>
+<label for="displayOrder">Ordem de exibição</label>
+<input id="displayOrder" name="displayOrder" type="number" min="0" max="10000" value="<%= item.displayOrder || 0 %>" required>
+<label class="checkbox">
+<input type="checkbox" name="active" <%= !item.id || item.active ? 'checked' : '' %>> Ativo</label>
+<% } %>
+<% if(resource === 'gallery') { %>
+<label for="activityDate">Data da atividade</label>
+<input id="activityDate" name="activityDate" type="date" value="<%= item.activityDate ? item.activityDate.toISOString().slice(0,10) : '' %>">
+<% } %>
+<% if(['pages','gallery'].includes(resource)) { %>
+<label class="checkbox">
+<input type="checkbox" name="published" <%= item.published ? 'checked' : '' %>> Publicado</label>
+<% } %>
+<% if(spec.image) { %>
+<label for="image">Imagem (JPG, PNG ou WebP; até 5 MB)</label>
+<input id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp" <%= resource === 'gallery' && !item.id ? 'required' : '' %>>
+<% if(item[spec.image]) { %>
+<img class="upload-preview" src="<%= item[spec.image] %>" alt="Imagem atual">
+<% if(resource !== 'gallery') { %>
+<label class="checkbox">
+<input type="checkbox" name="removeImage"> Remover imagem atual</label>
+<% } } } %>
+<% if(['pages','posts','work-areas'].includes(resource)) { %>
+<fieldset>
+<legend>Busca e compartilhamento</legend>
+<label for="seoTitle">Título SEO</label>
+<input id="seoTitle" name="seoTitle" maxlength="180" value="<%= item.seoTitle || '' %>">
+<label for="seoDescription">Descrição SEO</label>
+<textarea id="seoDescription" name="seoDescription" rows="3" maxlength="320"><%= item.seoDescription || '' %></textarea>
+</fieldset>
+<% } %>
+<div class="form-actions">
+<button class="btn btn-primary" type="submit">Salvar</button>
+<a class="btn" href="/admin/<%= resource %>">Cancelar</a>
+</div>
+</form><%- include('partials/footer') %>

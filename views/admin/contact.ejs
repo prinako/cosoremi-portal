@@ -1,0 +1,22 @@
+<%- include('partials/header') %>
+<h1><%= item.subject %></h1>
+<dl>
+  <% [
+    ['name', 'Nome'], ['email', 'E-mail'],
+    ['phone', 'Telefone'], ['nationality', 'Nacionalidade']
+  ].forEach(([key, label]) => { %>
+    <dt><%= label %></dt>
+    <dd><%= item[key] || 'Não informado' %></dd>
+  <% }) %>
+</dl>
+<div class="prose message"><%= item.message %></div>
+<form method="post">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <input type="hidden" name="read" value="<%= item.read ? 'false' : 'true' %>">
+  <button class="btn btn-primary" type="submit">Marcar como <%= item.read ? 'não lida' : 'lida' %></button>
+</form>
+<form method="post" action="/admin/contacts/<%= item.id %>/delete" data-confirm="Excluir esta mensagem permanentemente?">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <button class="btn danger" type="submit">Excluir mensagem</button>
+</form>
+<%- include('partials/footer') %>

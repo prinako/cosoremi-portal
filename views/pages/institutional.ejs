@@ -1,0 +1,37 @@
+<%- include('../partials/header') %>
+<section class="page-hero">
+  <div class="container">
+    <h1><%= item.title %></h1>
+    <p><%= item.subtitle %></p>
+  </div>
+</section>
+<section class="section container">
+  <% if(item.heroImage) { %><img
+    class="article-image"
+    src="<%= item.heroImage %>"
+    alt="<%= item.title %>"
+    loading="lazy"
+  /><% } %>
+  <div class="prose"><%= item.content %></div>
+  <% if(item.slug === 'doar') { %>
+  <h2>Como contribuir</h2>
+  <p class="prose"><%= settings.donation_text %></p>
+  <% if(settings.donation_pix) { %>
+  <p class="info-box">PIX / Doação: <%= settings.donation_pix %></p>
+  <% } else { %><a class="btn btn-primary" href="/contato"
+    >Entre em contato para contribuir</a
+  ><% } } %>
+  <% if(item.slug === 'emergencia') { %>
+  <p class="prose"><%= settings.emergency_text %></p>
+  <% if(settings.emergency_phone) { %><a
+    class="btn btn-primary"
+    href="tel:<%= settings.emergency_phone.replace(/[^+\d]/g,'') %>"
+    ><%= settings.emergency_phone %></a
+  ><% } %>
+  <p class="info-box">
+    O formulário do site não é monitorado em tempo real. Em caso de risco
+    imediato à vida, procure os serviços públicos de emergência da sua região.
+  </p>
+  <% } %>
+</section>
+<%- include('../partials/footer') %>

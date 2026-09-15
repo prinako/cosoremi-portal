@@ -1,0 +1,22 @@
+<%- include('partials/header') %>
+<h1>Painel de conteúdo</h1>
+<div class="card-grid">
+  <% Object.entries(counts).forEach(([label,count]) => { %>
+  <article class="image-card card-body">
+    <h2><%= label %></h2>
+    <strong class="count"><%= count %></strong>
+  </article>
+  <% }) %>
+</div>
+<h2>Atividade recente</h2>
+<ul class="activity">
+  <% activity.forEach(log => { %>
+  <li>
+    <time><%= log.createdAt.toLocaleString('pt-BR') %></time> ·
+    <%= log.user?.name || 'Sistema' %>
+    ·
+    <%= log.action %>
+  </li>
+  <% }) %>
+</ul>
+<%- include('partials/footer') %>

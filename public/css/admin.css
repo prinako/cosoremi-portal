@@ -1,0 +1,112 @@
+.admin-top {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--white);
+}
+.admin-top .brand {
+  margin-right: auto;
+}
+.admin-layout {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  min-height: 90vh;
+}
+.admin-sidebar {
+  padding: 24px 12px;
+  background: var(--green-950);
+}
+.admin-sidebar a {
+  display: block;
+  padding: 12px;
+  color: white;
+  border-radius: 8px;
+}
+.admin-sidebar a:hover {
+  background: var(--green-800);
+}
+.admin-main {
+  padding: 32px;
+  min-width: 0;
+  background: var(--surface);
+}
+.admin-main h1 {
+  font-size: 2rem;
+}
+.cms-form {
+  max-width: 850px;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+th,
+td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+td form {
+  display: inline-block;
+}
+.danger {
+  color: #9e2020;
+}
+.count {
+  font-size: 2.5rem;
+  color: var(--green-800);
+}
+.activity {
+  padding-left: 20px;
+}
+.activity li {
+  padding: 10px 0;
+}
+.upload-preview {
+  width: 240px;
+  height: 160px;
+}
+.login-panel {
+  max-width: 480px;
+  padding: 24px;
+  margin: 6vh auto;
+}
+fieldset {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+}
+.form-error {
+  background: #ffe8e8;
+  color: #851717;
+  padding: 16px;
+}
+.message {
+  padding: 24px;
+  background: white;
+  margin-bottom: 24px;
+}
+@media (max-width: 760px) {
+  .admin-layout {
+    grid-template-columns: 1fr;
+  }
+  .admin-sidebar {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 8px;
+  }
+  .admin-main {
+    padding: 20px 12px;
+  }
+  .admin-top {
+    gap: 10px;
+    padding: 12px;
+  }
+}

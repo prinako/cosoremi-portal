@@ -1,0 +1,18 @@
+<%- include('partials/header') %>
+<h1>Configurações do site</h1>
+<form method="post" class="contact-form cms-form">
+  <input type="hidden" name="_csrf" value="<%= csrf %>" /><%
+  Object.entries(fields).forEach(([key,[label]]) => { %><label for="<%= key %>"
+    ><%= label %></label
+  ><textarea
+    id="<%= key %>"
+    name="<%= key %>"
+    rows="<%= key.endsWith('_text') ? 5 : 2 %>"
+    maxlength="<%= key.endsWith('_text') ? 5000 : 500 %>"
+  >
+<%= values[key] || '' %></textarea
+  ><% }) %><button class="btn btn-primary" type="submit">
+    Salvar configurações
+  </button>
+</form>
+<%- include('partials/footer') %>

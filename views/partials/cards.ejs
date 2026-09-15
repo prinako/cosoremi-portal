@@ -1,0 +1,31 @@
+<div class="card-grid">
+  <% items.forEach(entry => { %>
+  <article class="image-card">
+    <div class="card-image placeholder-image">
+      <% if(entry[field]) { %><img
+        src="<%= entry[field] %>"
+        alt="<%= entry.title %>"
+        loading="lazy"
+        width="600"
+        height="400"
+      /><% } %>
+    </div>
+    <div class="card-body">
+      <h3>
+        <% if(base) { %><a href="<%= base %>/<%= entry.slug %>"
+          ><%= entry.title %></a
+        ><% } else { %><%= entry.title %><% } %>
+      </h3>
+      <% if(entry.activityDate) { %><time
+        datetime="<%= entry.activityDate.toISOString() %>"
+        ><%= entry.activityDate.toLocaleDateString('pt-BR', {timeZone:'UTC'})
+        %></time
+      ><% } %>
+      <p><%= entry.summary || entry.description || '' %></p>
+    </div>
+  </article>
+  <% }) %>
+</div>
+<% if (!items.length) { %>
+<p>Em breve, novas atualizações.</p>
+<% } %>

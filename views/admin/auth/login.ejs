@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Entrar | COSOREMI</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+  </head>
+  <body>
+    <main class="login-panel">
+      <h1>COSOREMI</h1>
+      <p>Gestão de conteúdo</p>
+      <% if(error) { %>
+      <p class="form-error" role="alert"><%= error %></p>
+      <% } %>
+      <form method="post" action="/admin/login" class="contact-form">
+        <input type="hidden" name="_csrf" value="<%= csrf %>" /><label
+          for="email"
+          >E-mail</label
+        ><input
+          id="email"
+          name="email"
+          type="email"
+          autocomplete="username"
+          maxlength="254"
+          required
+        /><label for="password">Senha</label
+        ><input
+          id="password"
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          maxlength="200"
+          required
+        /><button type="submit" class="btn btn-primary">Entrar</button>
+      </form>
+      <a href="/">Voltar ao site</a>
+    </main>
+  </body>
+</html>

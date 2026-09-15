@@ -32,11 +32,16 @@ if (header) {
 
 document.querySelectorAll('a[href^="#"]').forEach((link) => {
   link.addEventListener('click', (event) => {
-    const target = document.querySelector(link.getAttribute('href'));
+    const target = document.getElementById(link.getAttribute('href').slice(1));
 
     if (target) {
       event.preventDefault();
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      target.scrollIntoView({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? 'auto'
+          : 'smooth',
+        block: 'start',
+      });
     }
   });
 });
@@ -47,3 +52,21 @@ document.querySelectorAll('.placeholder-image img').forEach((image) => {
     image.setAttribute('aria-hidden', 'true');
   });
 });
+
+if (navToggle && navMenu) {
+  document.addEventListener('keydown', (event) => {
+    if (
+      event.key === 'Escape' &&
+      navToggle.getAttribute('aria-expanded') === 'true'
+    ) {
+      navToggle.click();
+      navToggle.focus();
+    }
+  });
+  window
+    .matchMedia('(min-width: 980px)')
+    .addEventListener('change', (event) => {
+      if (event.matches && navToggle.getAttribute('aria-expanded') === 'true')
+        navToggle.click();
+    });
+}

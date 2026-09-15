@@ -1,0 +1,46 @@
+<%- include('partials/header') %>
+<div class="section-heading">
+  <h1><%= spec.label %></h1>
+  <a class="btn btn-primary" href="/admin/<%= resource %>/new">Criar</a>
+</div>
+<div class="table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>Título / nome</th>
+        <th>Estado</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% items.forEach(item => { %>
+      <tr>
+        <td><%= item.title || item.name %></td>
+        <td>
+          <%= item.status || (item.published !== undefined ? (item.published ? 'Publicado' : 'Oculto') : item.active !== undefined ? (item.active ? 'Ativo' : 'Inativo') : '—') %>
+        </td>
+        <td>
+          <a class="btn" href="/admin/<%= resource %>/<%= item.id %>/edit"
+            >Editar</a
+          >
+          <form
+            method="post"
+            action="/admin/<%= resource %>/<%= item.id %>/delete"
+            data-confirm="Excluir este registro? Esta ação não pode ser desfeita."
+          >
+            <input type="hidden" name="_csrf" value="<%= csrf %>" /><button
+              class="btn danger"
+              type="submit"
+            >
+              Excluir
+            </button>
+          </form>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% if(!items.length) { %>
+<p>Nenhum registro encontrado.</p>
+<% } %><%- include('../partials/pagination') %><%- include('partials/footer') %>
