@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="<%= pageDescription %>">
-<meta name="theme-color" content="#0f5f46">
+<meta name="theme-color" content="<%= /^#[0-9a-fA-F]{6}$/.test(settings.primary_color || '') ? settings.primary_color : '#0f5f46' %>">
 <meta property="og:title" content="<%= pageTitle %>">
 <meta property="og:description" content="<%= pageDescription %>">
 <meta property="og:type" content="website">
@@ -14,6 +14,7 @@
 <% } %>
 <link rel="canonical" href="<%= currentUrl %>">
 <link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/theme.css">
 <title><%= pageTitle %>
 </title>
 </head>
@@ -22,7 +23,11 @@
 <header class="site-header" data-header>
 <nav class="navbar container" aria-label="Navegação principal">
 <a class="brand" href="/" aria-label="Página inicial">
+<% if (settings.site_logo) { %>
+<img class="brand-logo" src="<%= settings.site_logo %>" alt="" aria-hidden="true">
+<% } else { %>
 <span class="brand-mark" aria-hidden="true">C</span>
+<% } %>
 <span><%= settings.site_name || 'COSOREMI' %>
 </span>
 </a>
