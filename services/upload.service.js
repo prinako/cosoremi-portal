@@ -62,7 +62,9 @@ exports.save = async (file, folder) => {
   const filename = `${randomUUID()}.webp`;
   try {
     await fs.mkdir(path.join(root, folder), { recursive: true });
-    await fs.writeFile(path.join(root, folder, filename), buffer, { flag: 'wx' });
+    await fs.writeFile(path.join(root, folder, filename), buffer, {
+      flag: 'wx',
+    });
   } catch (error) {
     throw uploadStorageError(error);
   }
