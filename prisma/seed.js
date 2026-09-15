@@ -9,6 +9,9 @@ const settings = {
   site_name: 'COSOREMI',
   site_description:
     'Comité de Solidariedade dos Refugiados e Migrantes. Solidariedade, acolhimento e proteção no Pará.',
+  site_logo: '',
+  primary_color: '#0f5f46',
+  secondary_color: '#f5c84b',
   phone: '',
   whatsapp: '',
   emergency_phone: '',
@@ -126,10 +129,8 @@ function readAdministrator() {
 }
 
 async function seed() {
-  // Validate optional account configuration before making database changes.
   const administrator = readAdministrator();
 
-  // Idempotent: never overwrite content or credentials edited by administrators.
   for (const [key, value] of Object.entries(settings))
     await db.setting.upsert({
       where: { key },
