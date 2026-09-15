@@ -3,7 +3,9 @@ const { rateLimit } = require('express-rate-limit');
 const { asyncRoute: wrap } = require('../utils/http');
 const { token, csrf } = require('../middleware/security');
 const c = require('../controllers/public.controller');
+
 router.use(wrap(c.locals));
+router.get('/theme.css', c.theme);
 router.get('/', wrap(c.home));
 router.get(['/sobre-nos', '/doar', '/emergencia'], wrap(c.page));
 router.get('/paginas/:slug', wrap(c.page));
@@ -25,4 +27,5 @@ router.post(
   csrf,
   wrap(c.contact)
 );
+
 module.exports = router;
