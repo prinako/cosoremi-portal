@@ -4,6 +4,8 @@ Portal institucional e CMS do **COSOREMI — Comité de Solidariedade dos Refugi
 
 Express + EJS renderizam as páginas no servidor. PostgreSQL armazena conteúdo e sessões; Prisma 6 gerencia os modelos e migrações. A interface usa JavaScript e CSS, sem framework frontend. Licença MIT.
 
+Consulte o [índice de documentação](docs/README.md) para o guia do CMS, arquitetura, desenvolvimento e operação.
+
 ## Requisitos
 
 - Node.js 22.12+ (prefira uma versão LTS compatível) e npm.
