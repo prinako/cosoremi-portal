@@ -1,0 +1,7 @@
+node_modules
+package-lock.json
+public/uploads
+prisma/migrations
+.env*
+# EJS partials intentionally span opening/closing HTML tags across files.
+views/

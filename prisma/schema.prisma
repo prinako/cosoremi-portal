@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model User {
+  id             String     @id @default(cuid())
+  name           String     @db.VarChar(120)
+  email          String     @unique @db.VarChar(254)
+  passwordHash   String
+  role           Role       @default(EDITOR)
+  active         Boolean    @default(true)
+  sessionVersion Int        @default(0)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  posts          Post[]
+  auditLogs      AuditLog[]
+}
+
+model Page {
+  id             String   @id @default(cuid())
+  slug           String   @unique @db.VarChar(180)
+  title          String   @db.VarChar(180)
+  subtitle       String   @default("") @db.VarChar(500)
+  content        String   @default("")
+  heroImage      String   @default("")
+  seoTitle       String   @default("") @db.VarChar(180)
+  seoDescription String   @default("") @db.VarChar(320)
+  published      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(120)
+  slug      String   @unique @db.VarChar(180)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  posts     Post[]
+}
+
+model Post {
+  id             String     @id @default(cuid())
+  title          String     @db.VarChar(180)
+  slug           String     @unique @db.VarChar(180)
+  summary        String     @default("") @db.VarChar(500)
+  content        String
+  featuredImage  String     @default("")
+  status         PostStatus @default(DRAFT)
+  publishedAt    DateTime?
+  categoryId     String?
+  category       Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  authorId       String
+  author         User       @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  seoTitle       String     @default("") @db.VarChar(180)
+  seoDescription String     @default("") @db.VarChar(320)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([status, publishedAt])
+}
+
+model WorkArea {
+  id             String   @id @default(cuid())
+  title          String   @db.VarChar(180)
+  slug           String   @unique @db.VarChar(180)
+  summary        String   @default("") @db.VarChar(500)
+  content        String
+  image          String   @default("")
+  displayOrder   Int      @default(0)
+  active         Boolean  @default(true)
+  seoTitle       String   @default("") @db.VarChar(180)
+  seoDescription String   @default("") @db.VarChar(320)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([active, displayOrder])
+}
+
+model GalleryItem {
+  id           String    @id @default(cuid())
+  title        String    @db.VarChar(180)
+  description  String    @default("") @db.VarChar(2000)
+  image        String
+  category     String    @default("") @db.VarChar(120)
+  activityDate DateTime?
+  published    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([published, activityDate])
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
+
+model Contact {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(120)
+  email       String   @db.VarChar(254)
+  phone       String   @default("") @db.VarChar(30)
+  nationality String   @default("") @db.VarChar(80)
+  subject     String   @db.VarChar(80)
+  message     String   @db.VarChar(5000)
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([read, createdAt])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action      String
+  entity      String
+  entityId    String?
+  description String   @default("")
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// Storage owned by connect-pg-simple; modeled here to prevent migration drift.
+model Session {
+  sid    String   @id @db.VarChar(255)
+  sess   Json     @db.Json
+  expire DateTime @db.Timestamp(6)
+
+  @@index([expire], map: "IDX_session_expire")
+  @@map("session")
+}
