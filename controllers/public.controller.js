@@ -8,7 +8,8 @@ const safeColor = (value, fallback) =>
   /^#[0-9a-fA-F]{6}$/.test(value || '') ? value.toLowerCase() : fallback;
 
 function mixColor(hex, target, amount) {
-  const parseHex = (value) => [1, 3, 5].map((i) => parseInt(value.slice(i, i + 2), 16));
+  const parseHex = (value) =>
+    [1, 3, 5].map((i) => parseInt(value.slice(i, i + 2), 16));
   const source = parseHex(hex);
   const destination = parseHex(target);
   const mixed = source.map((channel, index) =>
