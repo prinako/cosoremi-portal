@@ -9,7 +9,8 @@ const allowedFolders = new Set(['blog', 'gallery', 'pages', 'branding']);
 
 exports.save = async (file, folder) => {
   if (!file) return null;
-  if (!allowedFolders.has(folder)) throw httpError(422, 'Destino de upload inválido.');
+  if (!allowedFolders.has(folder))
+    throw httpError(422, 'Destino de upload inválido.');
 
   const extensions = {
     'image/jpeg': ['.jpg', '.jpeg'],
