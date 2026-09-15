@@ -36,7 +36,7 @@ COPY public ./public
 COPY prisma ./prisma
 COPY docker ./docker
 COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/cosoremi-entrypoint
-RUN mkdir -p public/uploads/blog public/uploads/gallery public/uploads/pages \
+RUN mkdir -p public/uploads/blog public/uploads/gallery public/uploads/pages public/uploads/branding \
     && chown -R node:node public/uploads
 USER node
 EXPOSE 3000
