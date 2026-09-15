@@ -1,17 +1,70 @@
 <%- include('partials/header') %>
 <h1>Configurações do site</h1>
-<form method="post" class="contact-form cms-form">
-  <input type="hidden" name="_csrf" value="<%= csrf %>" /><%
-  Object.entries(fields).forEach(([key,[label]]) => { %><label for="<%= key %>"
-    ><%= label %></label
-  ><textarea
-    id="<%= key %>"
-    name="<%= key %>"
-    rows="<%= key.endsWith('_text') ? 5 : 2 %>"
-    maxlength="<%= key.endsWith('_text') ? 5000 : 500 %>"
-  >
-<%= values[key] || '' %></textarea
-  ><% }) %><button class="btn btn-primary" type="submit">
+<form method="post" enctype="multipart/form-data" class="contact-form cms-form">
+  <input type="hidden" name="_csrf" value="<%= csrf %>" />
+
+  <fieldset class="branding-panel">
+    <legend>Identidade visual</legend>
+
+    <div class="branding-colors">
+      <div class="color-control">
+        <label for="primary_color">Cor primária</label>
+        <input
+          id="primary_color"
+          name="primary_color"
+          type="color"
+          value="<%= values.primary_color || '#0f5f46' %>"
+          required
+        >
+        <code><%= values.primary_color || '#0f5f46' %></code>
+      </div>
+
+      <div class="color-control">
+        <label for="secondary_color">Cor secundária</label>
+        <input
+          id="secondary_color"
+          name="secondary_color"
+          type="color"
+          value="<%= values.secondary_color || '#f5c84b' %>"
+          required
+        >
+        <code><%= values.secondary_color || '#f5c84b' %></code>
+      </div>
+    </div>
+
+    <div class="logo-settings">
+      <label for="logo">Logo do site</label>
+      <% if (values.site_logo) { %>
+        <div class="logo-preview">
+          <img src="<%= values.site_logo %>" alt="Logo atual do site">
+        </div>
+        <label>
+          <input type="checkbox" name="removeLogo">
+          Remover logo atual
+        </label>
+      <% } %>
+      <input
+        id="logo"
+        name="logo"
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+      >
+      <p class="branding-help">JPG, PNG ou WebP, até 5 MB. O arquivo é reprocessado com segurança antes de ser publicado.</p>
+    </div>
+  </fieldset>
+
+  <% Object.entries(fields).forEach(([key,[label]]) => {
+       if (key === 'primary_color' || key === 'secondary_color') return; %>
+    <label for="<%= key %>"><%= label %></label>
+    <textarea
+      id="<%= key %>"
+      name="<%= key %>"
+      rows="<%= key.endsWith('_text') ? 5 : 2 %>"
+      maxlength="<%= key.endsWith('_text') ? 5000 : 500 %>"
+    ><%= values[key] || '' %></textarea>
+  <% }) %>
+
+  <button class="btn btn-primary" type="submit">
     Salvar configurações
   </button>
 </form>

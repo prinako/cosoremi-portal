@@ -3,6 +3,21 @@ const { published } = require('../services/content.service');
 const { parse, contact, subjects } = require('../validators/content');
 const pagination = require('../utils/pagination');
 const { httpError } = require('../utils/http');
+
+const safeColor = (value, fallback) =>
+  /^#[0-9a-fA-F]{6}$/.test(value || '') ? value.toLowerCase() : fallback;
+
+function mixColor(hex, target, amount) {
+  const parseHex = (value) =>
+    [1, 3, 5].map((i) => parseInt(value.slice(i, i + 2), 16));
+  const source = parseHex(hex);
+  const destination = parseHex(target);
+  const mixed = source.map((channel, index) =>
+    Math.round(channel + (destination[index] - channel) * amount)
+  );
+  return `#${mixed.map((value) => value.toString(16).padStart(2, '0')).join('')}`;
+}
+
 exports.locals = async (req, res, next) => {
   const values = await settings.read(req.app.locals.db);
   Object.assign(res.locals, {
@@ -16,6 +31,26 @@ exports.locals = async (req, res, next) => {
   });
   next();
 };
+
+exports.theme = (req, res) => {
+  const primary = safeColor(res.locals.settings.primary_color, '#0f5f46');
+  const secondary = safeColor(res.locals.settings.secondary_color, '#f5c84b');
+
+  res.type('text/css');
+  res.set('Cache-Control', 'public, max-age=60, must-revalidate');
+  res.send(`:root {
+  --primary-color: ${primary};
+  --secondary-color: ${secondary};
+  --green-950: ${mixColor(primary, '#000000', 0.4)};
+  --green-900: ${mixColor(primary, '#000000', 0.25)};
+  --green-800: ${primary};
+  --green-700: ${mixColor(primary, '#ffffff', 0.14)};
+  --green-100: ${mixColor(primary, '#ffffff', 0.86)};
+  --yellow-500: ${secondary};
+  --yellow-100: ${mixColor(secondary, '#ffffff', 0.78)};
+}`);
+};
+
 function render(res, view, item, extra = {}) {
   res.render(`pages/${view}`, {
     item,
@@ -31,6 +66,7 @@ function render(res, view, item, extra = {}) {
     ...extra,
   });
 }
+
 exports.home = async (req, res) => {
   const db = req.app.locals.db;
   const [item, about, areas, posts, gallery] = await Promise.all([
@@ -55,6 +91,7 @@ exports.home = async (req, res) => {
   if (!item) throw httpError(404, 'Página não encontrada.');
   render(res, 'home', item, { about, areas, posts, gallery });
 };
+
 exports.page = async (req, res) => {
   const slug = req.params.slug || req.path.slice(1);
   const item = await req.app.locals.db.page.findFirst({
@@ -63,6 +100,7 @@ exports.page = async (req, res) => {
   if (!item) throw httpError(404, 'Página não encontrada.');
   render(res, 'institutional', item);
 };
+
 exports.list = (type) => async (req, res) => {
   const config = {
     blog: {
@@ -90,8 +128,10 @@ exports.list = (type) => async (req, res) => {
       field: 'image',
     },
   }[type];
+
   if (type === 'blog' && typeof req.query.category === 'string')
     config.where.category = { slug: req.query.category.slice(0, 180) };
+
   const { page, take, skip } = pagination(req.query.page);
   const db = req.app.locals.db;
   const [items, count, categories] = await Promise.all([
@@ -104,6 +144,7 @@ exports.list = (type) => async (req, res) => {
     db[config.model].count({ where: config.where }),
     type === 'blog' ? db.category.findMany({ orderBy: { name: 'asc' } }) : [],
   ]);
+
   render(
     res,
     'listing',
@@ -121,6 +162,7 @@ exports.list = (type) => async (req, res) => {
     }
   );
 };
+
 exports.detail = (type) => async (req, res) => {
   const db = req.app.locals.db;
   const item =
@@ -135,6 +177,7 @@ exports.detail = (type) => async (req, res) => {
   if (!item) throw httpError(404, 'Página não encontrada.');
   render(res, 'detail', item);
 };
+
 exports.contactForm = async (req, res) => {
   const item = await req.app.locals.db.page.findFirst({
     where: { slug: 'contato', published: true },
@@ -142,6 +185,7 @@ exports.contactForm = async (req, res) => {
   if (!item) throw httpError(404, 'Página não encontrada.');
   render(res, 'contact', item, { subjects, sent: req.query.sent === '1' });
 };
+
 exports.contact = async (req, res) => {
   await req.app.locals.db.contact.create({ data: parse(contact, req.body) });
   res.redirect(303, '/contato?sent=1');

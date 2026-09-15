@@ -1,5 +1,6 @@
 const { z } = require('zod');
 const { parse } = require('../validators/content');
+
 const short = z.string().trim().max(320);
 const phone = z
   .string()
@@ -13,9 +14,16 @@ const url = z.union([
     .max(500)
     .refine((v) => new URL(v).protocol === 'https:', 'Use HTTPS.'),
 ]);
+const color = z
+  .string()
+  .trim()
+  .regex(/^#[0-9a-fA-F]{6}$/, 'Use uma cor hexadecimal no formato #RRGGBB.');
+
 exports.fields = {
   site_name: ['Nome da organização', short.min(1)],
   site_description: ['Descrição do site', short],
+  primary_color: ['Cor primária', color],
+  secondary_color: ['Cor secundária', color],
   phone: ['Telefone', phone],
   whatsapp: [
     'WhatsApp (com código do país)',
@@ -37,10 +45,20 @@ exports.fields = {
   help_cta: ['Botão de ajuda', short.min(1)],
   donate_cta: ['Botão de doação', short.min(1)],
 };
-exports.read = async (db) =>
-  Object.fromEntries(
+
+exports.defaults = {
+  primary_color: '#0f5f46',
+  secondary_color: '#f5c84b',
+  site_logo: '',
+};
+
+exports.read = async (db) => ({
+  ...exports.defaults,
+  ...Object.fromEntries(
     (await db.setting.findMany()).map((s) => [s.key, s.value])
-  );
+  ),
+});
+
 exports.validate = (body) =>
   parse(
     z.object(
