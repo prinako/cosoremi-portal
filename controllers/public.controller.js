@@ -20,6 +20,7 @@ function mixColor(hex, target, amount) {
 
 exports.locals = async (req, res, next) => {
   const values = await settings.read(req.app.locals.db);
+  res.set('Cache-Control', 'no-store, max-age=0');
   Object.assign(res.locals, {
     settings: values,
     pageTitle: values.site_name || 'COSOREMI',
