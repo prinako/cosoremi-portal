@@ -1,6 +1,9 @@
-const session = require('express-session');
-const PgStore = require('connect-pg-simple')(session);
-module.exports = (env, store) =>
+import connectPgSimple from 'connect-pg-simple';
+import session from 'express-session';
+
+const PgStore = connectPgSimple(session);
+
+export default (env, store) =>
   session({
     store:
       store ||

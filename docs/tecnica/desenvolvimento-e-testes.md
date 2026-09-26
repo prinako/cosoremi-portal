@@ -9,6 +9,10 @@
 
 ## Ambiente local
 
+O código do servidor usa ESM nativo do Node.js. O campo `"type": "module"` em `package.json` é intencional. Imports relativos em arquivos JavaScript devem incluir `.js`, e módulos internos do Node devem usar o prefixo `node:`. Use `import.meta.dirname` quando um caminho depender da pasta do módulo.
+
+Arquivos `.cjs` são reservados para auxiliares que precisam permanecer explicitamente CommonJS. Atualmente essa exceção se limita a `docker/healthcheck.cjs` e `docker/wait-for-db.cjs`, executados diretamente pela infraestrutura Docker. Não use `createRequire()` como padrão para código novo.
+
 ```bash
 npm install
 cp .env.example .env

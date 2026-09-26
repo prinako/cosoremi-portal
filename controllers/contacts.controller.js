@@ -1,6 +1,7 @@
-const pagination = require('../utils/pagination');
-const { audit } = require('../services/content.service');
-exports.list = async (req, res) => {
+import { audit } from '../services/content.service.js';
+import pagination from '../utils/pagination.js';
+
+export const list = async (req, res) => {
   const { page, take, skip } = pagination(req.query.page, 20);
   const [items, count] = await Promise.all([
     req.app.locals.db.contact.findMany({
@@ -24,13 +25,13 @@ exports.list = async (req, res) => {
     base: '/admin/contacts',
   });
 };
-exports.show = async (req, res) =>
+export const show = async (req, res) =>
   res.render('admin/contact', {
     item: await req.app.locals.db.contact.findUniqueOrThrow({
       where: { id: req.params.id },
     }),
   });
-exports.update = async (req, res) => {
+export const update = async (req, res) => {
   await req.app.locals.db.$transaction(async (tx) => {
     await tx.contact.update({
       where: { id: req.params.id },
@@ -46,7 +47,7 @@ exports.update = async (req, res) => {
   });
   res.redirect('/admin/contacts');
 };
-exports.remove = async (req, res) => {
+export const remove = async (req, res) => {
   await req.app.locals.db.$transaction(async (tx) => {
     await tx.contact.delete({ where: { id: req.params.id } });
     await audit(tx, req.user.id, 'CONTACT_DELETED', 'contact', req.params.id);

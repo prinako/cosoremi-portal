@@ -1,16 +1,19 @@
-const router = require('express').Router();
-const { authenticate, roles } = require('../middleware/auth.middleware');
-const { token, csrf } = require('../middleware/security');
-const { asyncRoute: wrap } = require('../utils/http');
-const upload = require('../middleware/upload.middleware');
-const content = require('../controllers/content.controller');
-const users = require('../controllers/users.controller');
-const settings = require('../controllers/settings.controller');
-const contacts = require('../controllers/contacts.controller');
+import { Router } from 'express';
+import { dashboard } from '../controllers/admin.controller.js';
+import * as contacts from '../controllers/contacts.controller.js';
+import * as content from '../controllers/content.controller.js';
+import * as settings from '../controllers/settings.controller.js';
+import * as users from '../controllers/users.controller.js';
+import { authenticate, roles } from '../middleware/auth.middleware.js';
+import { csrf, token } from '../middleware/security.js';
+import upload from '../middleware/upload.middleware.js';
+import { asyncRoute as wrap } from '../utils/http.js';
+
+const router = Router();
 const managers = roles('SUPER_ADMIN', 'ADMIN');
 
 router.use(authenticate, token);
-router.get('/', wrap(require('../controllers/admin.controller').dashboard));
+router.get('/', wrap(dashboard));
 router.get('/settings', managers, wrap(settings.form));
 router.post('/settings', managers, upload.logo, csrf, wrap(settings.save));
 router.get('/users', roles('SUPER_ADMIN'), wrap(users.list));
@@ -31,4 +34,4 @@ router.post('/:resource/new', upload, csrf, wrap(content.save));
 router.post('/:resource/:id/edit', upload, csrf, wrap(content.save));
 router.post('/:resource/:id/delete', csrf, wrap(content.remove));
 
-module.exports = router;
+export default router;

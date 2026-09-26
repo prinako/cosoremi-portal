@@ -1,14 +1,15 @@
-const {
+import {
   resources,
-  save,
+  save as saveContent,
   audit,
   reservedPages,
-} = require('../services/content.service');
-const { schemas, parse } = require('../validators/content');
-const upload = require('../services/upload.service');
-const pagination = require('../utils/pagination');
-const { httpError } = require('../utils/http');
-exports.context = (req, res, next) => {
+} from '../services/content.service.js';
+import * as upload from '../services/upload.service.js';
+import pagination from '../utils/pagination.js';
+import { httpError } from '../utils/http.js';
+import { parse, schemas } from '../validators/content.js';
+
+export const context = (req, res, next) => {
   const resource = req.params.resource;
   const spec = Object.hasOwn(resources, resource) ? resources[resource] : null;
   if (!spec) return next(httpError(404, 'Área não encontrada.'));
@@ -19,7 +20,7 @@ exports.context = (req, res, next) => {
   Object.assign(res.locals, { resource, spec });
   next();
 };
-exports.list = async (req, res) => {
+export const list = async (req, res) => {
   const db = req.app.locals.db[req.spec.model];
   const { page, take, skip } = pagination(req.query.page, 20);
   const [items, count] = await Promise.all([
@@ -33,7 +34,7 @@ exports.list = async (req, res) => {
     base: `/admin/${req.resource}`,
   });
 };
-exports.form = async (req, res) => {
+export const form = async (req, res) => {
   const item = req.params.id
     ? await req.app.locals.db[req.spec.model].findUniqueOrThrow({
         where: { id: req.params.id },
@@ -45,7 +46,7 @@ exports.form = async (req, res) => {
       : [];
   res.render('admin/form', { item, categories });
 };
-exports.save = async (req, res) => {
+export const save = async (req, res) => {
   const data = parse(schemas[req.resource], req.body);
   const existing = req.params.id
     ? await req.app.locals.db[req.spec.model].findUniqueOrThrow({
@@ -65,7 +66,7 @@ exports.save = async (req, res) => {
   if (req.resource === 'gallery' && !image && !existing?.image)
     throw httpError(422, 'Selecione uma imagem para a galeria.');
   try {
-    await save(
+    await saveContent(
       req.app.locals.db,
       req.resource,
       req.params.id,
@@ -86,7 +87,7 @@ exports.save = async (req, res) => {
     await upload.remove(existing[req.spec.image]);
   res.redirect(`/admin/${req.resource}`);
 };
-exports.remove = async (req, res) => {
+export const remove = async (req, res) => {
   const old = await req.app.locals.db.$transaction(async (tx) => {
     const item = await tx[req.spec.model].findUniqueOrThrow({
       where: { id: req.params.id },

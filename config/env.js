@@ -1,4 +1,6 @@
-require('dotenv').config({ quiet: true });
+import dotenv from 'dotenv';
+
+dotenv.config({ quiet: true });
 function environment() {
   const { DATABASE_URL, SESSION_SECRET, APP_URL } = process.env;
   if (
@@ -23,4 +25,4 @@ function environment() {
     production: process.env.NODE_ENV === 'production',
   };
 }
-module.exports = environment;
+export default environment;

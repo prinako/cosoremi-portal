@@ -1,10 +1,10 @@
-const sharp = require('sharp');
-const path = require('node:path');
-const fs = require('node:fs/promises');
-const { randomUUID } = require('node:crypto');
-const { httpError } = require('../utils/http');
+import { randomUUID } from 'node:crypto';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import sharp from 'sharp';
+import { httpError } from '../utils/http.js';
 
-const root = path.join(__dirname, '..', 'public', 'uploads');
+const root = path.join(import.meta.dirname, '..', 'public', 'uploads');
 const allowedFolders = new Set(['blog', 'gallery', 'pages', 'branding']);
 
 function uploadStorageError(error) {
@@ -16,7 +16,7 @@ function uploadStorageError(error) {
   return error;
 }
 
-exports.save = async (file, folder) => {
+export const save = async (file, folder) => {
   if (!file) return null;
   if (!allowedFolders.has(folder))
     throw httpError(422, 'Destino de upload inválido.');
@@ -71,7 +71,7 @@ exports.save = async (file, folder) => {
   return `/uploads/${folder}/${filename}`;
 };
 
-exports.remove = async (image) => {
+export const remove = async (image) => {
   if (
     !/^\/uploads\/(blog|gallery|pages|branding)\/[a-f\d-]+\.webp$/.test(
       image || ''

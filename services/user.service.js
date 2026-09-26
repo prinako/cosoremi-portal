@@ -1,7 +1,8 @@
-const bcrypt = require('bcrypt');
-const { audit } = require('./content.service');
-const { httpError } = require('../utils/http');
-exports.safeSelect = {
+import bcrypt from 'bcrypt';
+import { httpError } from '../utils/http.js';
+import { audit } from './content.service.js';
+
+export const safeSelect = {
   id: true,
   name: true,
   email: true,
@@ -9,7 +10,7 @@ exports.safeSelect = {
   role: true,
   createdAt: true,
 };
-exports.save = async (db, id, input, actorId) => {
+export const save = async (db, id, input, actorId) => {
   const { password, ...data } = input;
   if (!id && !password)
     throw httpError(422, 'Informe uma senha para o novo usuário.');
@@ -37,9 +38,9 @@ exports.save = async (db, id, input, actorId) => {
       ? await tx.user.update({
           where: { id },
           data,
-          select: exports.safeSelect,
+          select: safeSelect,
         })
-      : await tx.user.create({ data, select: exports.safeSelect });
+      : await tx.user.create({ data, select: safeSelect });
     await audit(
       tx,
       actorId,

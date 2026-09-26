@@ -1,5 +1,6 @@
-const { published } = require('../services/content.service');
-exports.dashboard = async (req, res) => {
+import { published } from '../services/content.service.js';
+
+export const dashboard = async (req, res) => {
   const db = req.app.locals.db;
   const canReadContacts = req.user.role !== 'EDITOR';
   const [posts, drafts, gallery, areas, unread, activity] = await Promise.all([

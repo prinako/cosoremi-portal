@@ -15,7 +15,7 @@ This is a server-rendered institutional website and CMS:
 - Express 4 and EJS
 - PostgreSQL 15 or newer; Docker currently uses PostgreSQL 17
 - Prisma ORM 6.19.x with the `prisma-client-js` generator
-- CommonJS application code
+- native Node.js ESM application code (`"type": "module"`)
 - vanilla CSS and JavaScript
 - Node's built-in test runner and Supertest
 
@@ -91,7 +91,7 @@ This repository uses Prisma ORM 6.19.x. Do not apply Prisma 7/8 configuration, g
 In particular:
 
 - keep `provider = "prisma-client-js"` in `prisma/schema.prisma`;
-- keep the existing CommonJS `PrismaClient` initialization;
+- keep the existing ESM `PrismaClient` initialization and `prisma-client-js` generator;
 - do not add `@prisma/adapter-pg` or another driver adapter;
 - do not replace PostgreSQL with Prisma Postgres or provision a hosted database;
 - do not install or apply the `prisma-postgres`, `prisma-postgres-setup`, or `prisma-upgrade-v7` skills;
