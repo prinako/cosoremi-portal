@@ -46,6 +46,7 @@ test('theme stylesheet sanitizes stored color values before rendering', () => {
   publicController.theme({}, response);
 
   assert.equal(response.contentType, 'text/css');
+  assert.equal(response.headers['Cache-Control'], 'public, max-age=300');
   assert.match(response.body, /--primary-color: #0f5f46;/);
   assert.match(response.body, /--secondary-color: #abcdef;/);
   assert.doesNotMatch(response.body, /display:none/);

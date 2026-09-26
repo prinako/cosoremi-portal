@@ -18,7 +18,7 @@ Em **Publicações**, é possível criar, editar e excluir notícias. Os campos 
 
 - **Título e slug:** identificam a publicação e formam seu endereço.
 - **Resumo:** aparece nos cards e ajuda o leitor a entender o assunto.
-- **Conteúdo:** corpo da notícia em texto simples.
+- **Conteúdo:** corpo estruturado da notícia.
 - **Categoria:** organiza e filtra publicações no blog.
 - **Imagem:** capa pública da publicação.
 - **Estado:** `Rascunho`, `Publicado` ou `Arquivado`.
@@ -42,7 +42,15 @@ Em **Páginas**, a equipe administra título, subtítulo, conteúdo, imagem, pub
 
 As páginas `inicio`, `sobre-nos`, `doar`, `emergencia` e `contato` possuem endereços fixos. Elas podem ser despublicadas, mas não excluídas. Páginas adicionais são acessadas em `/paginas/slug-da-pagina`.
 
-O conteúdo é texto simples: quebras de linha são preservadas, mas HTML não é interpretado. Estrutura visual, botões e componentes pertencem ao código do portal.
+O campo de conteúdo de páginas, publicações e linhas de trabalho permite
+parágrafos, títulos de níveis 2 e 3, negrito, itálico, links, listas, citações e
+divisores. Se o editor visual não carregar, o campo continua disponível como
+texto simples. Conteúdo antigo também continua funcionando e passa ao formato
+estruturado somente quando for salvo pelo editor.
+
+Não cole HTML, scripts, vídeos incorporados ou código de estilo: esses formatos
+são recusados. Imagens do corpo não fazem parte desta primeira versão; continue
+usando a imagem principal de cada conteúdo.
 
 ## Linhas de trabalho
 

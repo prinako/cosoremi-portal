@@ -31,6 +31,7 @@ export const save = async (req, res) => {
     await uploads.remove(uploadedLogo);
     throw error;
   }
+  service.invalidate(req.app.locals.db);
 
   if ((uploadedLogo || removeLogo) && current.site_logo)
     await uploads.remove(current.site_logo);

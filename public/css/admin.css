@@ -88,6 +88,39 @@ fieldset {
   color: #851717;
   padding: 16px;
 }
+.rich-content-editor__surface {
+  min-height: 18rem;
+  padding: 1rem;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.rich-content-editor__surface:focus-within {
+  border-color: var(--green-700);
+  outline: 3px solid rgba(245, 200, 75, 0.4);
+}
+.rich-content-editor__surface .codex-editor__redactor {
+  padding-bottom: 4rem !important;
+}
+.rich-content-editor__surface .ce-block__content,
+.rich-content-editor__surface .ce-toolbar__content {
+  max-width: 720px;
+}
+.rich-content-editor__surface .ce-header {
+  color: var(--green-950);
+}
+.rich-content-editor__surface .ce-toolbar__plus,
+.rich-content-editor__surface .ce-toolbar__settings-btn,
+.rich-content-editor__surface .ce-popover-item {
+  min-width: 40px;
+  min-height: 40px;
+}
+.rich-content-editor__surface [contenteditable='true']:focus-visible,
+.rich-content-editor__surface button:focus-visible {
+  outline: 3px solid var(--blue-700);
+  outline-offset: 3px;
+}
 .message {
   padding: 24px;
   background: white;

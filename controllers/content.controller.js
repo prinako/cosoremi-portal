@@ -8,6 +8,7 @@ import * as upload from '../services/upload.service.js';
 import pagination from '../utils/pagination.js';
 import { httpError } from '../utils/http.js';
 import { parse, schemas } from '../validators/content.js';
+import { normalizeContentSubmission } from '../services/rich-content.service.js';
 
 export const context = (req, res, next) => {
   const resource = req.params.resource;
@@ -44,10 +45,13 @@ export const form = async (req, res) => {
     req.resource === 'posts'
       ? await req.app.locals.db.category.findMany({ orderBy: { name: 'asc' } })
       : [];
-  res.render('admin/form', { item, categories });
+  res.render('admin/form', { item, categories, fields: req.spec.fields });
 };
 export const save = async (req, res) => {
-  const data = parse(schemas[req.resource], req.body);
+  const data = normalizeContentSubmission(
+    req.resource,
+    parse(schemas[req.resource], req.body)
+  );
   const existing = req.params.id
     ? await req.app.locals.db[req.spec.model].findUniqueOrThrow({
         where: { id: req.params.id },

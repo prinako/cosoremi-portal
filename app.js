@@ -1,4 +1,5 @@
 import path from 'node:path';
+import crypto from 'node:crypto';
 import express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
@@ -12,6 +13,11 @@ import authRouter from './routes/auth.routes.js';
 import publicRouter from './routes/public.routes.js';
 import { httpError } from './utils/http.js';
 
+const richEditorRequest = (req) =>
+  /^\/admin\/(?:pages|posts|work-areas)\/(?:new|[^/]+\/edit)\/?$/.test(
+    req.path
+  );
+
 export default function createApp({ db, env, sessionStore } = {}) {
   const app = express();
   app.locals.env = env || environment();
@@ -20,12 +26,22 @@ export default function createApp({ db, env, sessionStore } = {}) {
   if (process.env.TRUST_PROXY === '1') app.set('trust proxy', 1);
   app.set('view engine', 'ejs');
   app.set('views', path.join(import.meta.dirname, 'views'));
+  app.use((req, res, next) => {
+    res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
+    next();
+  });
   app.use(
     helmet({
       contentSecurityPolicy: {
         directives: {
           'script-src': ["'self'"],
-          'style-src': ["'self'"],
+          'style-src': [
+            "'self'",
+            (req, res) => `'nonce-${res.locals.cspNonce}'`,
+          ],
+          'style-src-attr': [
+            (req) => (richEditorRequest(req) ? "'unsafe-inline'" : "'none'"),
+          ],
           'img-src': ["'self'"],
           'upgrade-insecure-requests': app.locals.env.production ? [] : null,
         },
@@ -59,7 +75,7 @@ export default function createApp({ db, env, sessionStore } = {}) {
     })
   );
   app.use(
-    express.urlencoded({ extended: false, limit: '150kb', parameterLimit: 40 })
+    express.urlencoded({ extended: false, limit: '300kb', parameterLimit: 40 })
   );
   app.use(createSession(app.locals.env, sessionStore));
   app.use('/admin', (req, res, next) => {

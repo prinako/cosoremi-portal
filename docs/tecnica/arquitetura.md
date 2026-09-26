@@ -97,11 +97,46 @@ Configurações ficam no banco. O endpoint `/theme.css` valida cores hexadecimai
 - Helmet e política CSP;
 - rate limit global e limites mais estritos em login e contato;
 - corpos HTTP limitados, validação Zod e saída EJS escapada;
+- conteúdo estruturado validado e renderizado no servidor por lista permitida;
 - revogação de sessões após alterações em contas;
 - trava transacional para preservar a última conta `SUPER_ADMIN` ativa;
 - erros centralizados sem stack trace ou detalhes do banco em produção.
 
-O conteúdo editorial é texto simples escapado. HTML fornecido por usuários não é executado.
+## Conteúdo editorial estruturado
+
+`Page`, `Post` e `WorkArea` mantêm o campo textual `content` e possuem também o
+campo JSONB anulável `contentBlocks`. Registros antigos, cujo JSON é nulo,
+continuam sendo convertidos em parágrafos escapados. Ao salvar pelo editor
+visual, o servidor valida o documento estruturado e deriva novamente
+`content`; a versão enviada pelo navegador nunca é usada como fonte do texto
+de compatibilidade.
+
+O formato COSOREMI está na versão `1` e aceita somente parágrafo, título H2/H3,
+lista ordenada ou não ordenada, citação e divisor. Nos textos internos são
+permitidos apenas `strong`, `em`, `a` e `br`; `b` e `i` são normalizados.
+Links aceitam HTTP, HTTPS, `mailto`, `tel` e endereços internos relativos
+controlados. O serviço `services/rich-content.service.js` concentra schema Zod,
+normalização, derivação de texto, compatibilidade legada e renderização HTML.
+As views usam saída EJS não escapada exclusivamente para o HTML produzido por
+esse renderizador confiável.
+
+Editor.js e as quatro ferramentas aprovadas são fixados em versões exatas e
+copiados para `public/vendor/editorjs` por `npm run build:editor`; nenhum CDN ou
+diretório `node_modules` é exposto. Um manifesto registra versão, licença e
+SHA-256 de cada arquivo. A CSP conserva `script-src 'self'`; folhas inseridas
+pelo editor recebem nonce. Como Editor.js posiciona a interface por atributos
+`style`, `style-src-attr 'unsafe-inline'` é liberado somente nas telas
+autenticadas de edição desses três recursos, enquanto as demais respostas usam
+`style-src-attr 'none'`.
+
+HTML bruto, scripts, estilos, classes arbitrárias, SVG, iframes, embeds e blocos
+de imagem são intencionalmente incompatíveis. Imagens continuam no pipeline
+Multer + Sharp já existente. Imagens dentro do corpo ficam como possível
+evolução futura.
+
+> Um novo bloco do editor nunca pode ser habilitado apenas no cliente. Antes de
+> persistir ou renderizar o tipo, é obrigatório adicionar schema de servidor,
+> regras de sanitização/normalização, implementação no renderizador e testes.
 
 ## Uploads
 

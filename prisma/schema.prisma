@@ -39,6 +39,7 @@ model Page {
   title          String   @db.VarChar(180)
   subtitle       String   @default("") @db.VarChar(500)
   content        String   @default("")
+  contentBlocks  Json?
   heroImage      String   @default("")
   seoTitle       String   @default("") @db.VarChar(180)
   seoDescription String   @default("") @db.VarChar(320)
@@ -62,6 +63,7 @@ model Post {
   slug           String     @unique @db.VarChar(180)
   summary        String     @default("") @db.VarChar(500)
   content        String
+  contentBlocks  Json?
   featuredImage  String     @default("")
   status         PostStatus @default(DRAFT)
   publishedAt    DateTime?
@@ -83,6 +85,7 @@ model WorkArea {
   slug           String   @unique @db.VarChar(180)
   summary        String   @default("") @db.VarChar(500)
   content        String
+  contentBlocks  Json?
   image          String   @default("")
   displayOrder   Int      @default(0)
   active         Boolean  @default(true)

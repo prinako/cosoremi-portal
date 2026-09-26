@@ -1,12 +1,77 @@
 import { published } from '../services/content.service.js';
+import { renderRichContent } from '../services/rich-content.service.js';
 import * as settings from '../services/settings.service.js';
 import pagination from '../utils/pagination.js';
 import { httpError } from '../utils/http.js';
 import {
   contact as contactSchema,
   parse,
+  publicListQuery,
   subjects,
 } from '../validators/content.js';
+
+const cardSelect = {
+  post: {
+    title: true,
+    slug: true,
+    summary: true,
+    featuredImage: true,
+  },
+  workArea: {
+    title: true,
+    slug: true,
+    summary: true,
+    image: true,
+  },
+  galleryItem: {
+    title: true,
+    description: true,
+    image: true,
+    activityDate: true,
+  },
+};
+
+const listing = {
+  blog: {
+    model: 'post',
+    where: published,
+    orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
+    title: 'Blog e notícias',
+    base: '/blog',
+    field: 'featuredImage',
+  },
+  areas: {
+    model: 'workArea',
+    where: () => ({ active: true }),
+    orderBy: [{ displayOrder: 'asc' }, { title: 'asc' }, { id: 'asc' }],
+    title: 'Linhas de trabalho',
+    base: '/linhas-de-trabalho',
+    field: 'image',
+  },
+  gallery: {
+    model: 'galleryItem',
+    where: () => ({ published: true }),
+    orderBy: [
+      { activityDate: { sort: 'desc', nulls: 'last' } },
+      { id: 'desc' },
+    ],
+    title: 'Galeria de atividades',
+    base: '/galeria',
+    field: 'image',
+  },
+};
+
+function requireConfig(config, type) {
+  if (!config) throw new TypeError(`Tipo público desconhecido: ${type}`);
+  return config;
+}
+
+function listingUrl(appUrl, base, page, category) {
+  const url = new URL(base, appUrl);
+  if (category) url.searchParams.set('category', category);
+  if (page > 1) url.searchParams.set('page', String(page));
+  return url.href;
+}
 
 const safeColor = (value, fallback) =>
   /^#[0-9a-fA-F]{6}$/.test(value || '') ? value.toLowerCase() : fallback;
@@ -42,7 +107,7 @@ export const theme = (req, res) => {
   const secondary = safeColor(res.locals.settings.secondary_color, '#f5c84b');
 
   res.type('text/css');
-  res.set('Cache-Control', 'no-store, max-age=0');
+  res.set('Cache-Control', 'public, max-age=300');
   res.send(`:root {
   --primary-color: ${primary};
   --secondary-color: ${secondary};
@@ -68,6 +133,10 @@ function render(res, view, item, extra = {}) {
       item.subtitle ||
       res.locals.pageDescription,
     image: item.heroImage || item.featuredImage || item.image || '',
+    contentHtml:
+      typeof item.content === 'string'
+        ? renderRichContent(item.contentBlocks, item.content)
+        : '',
     ...extra,
   });
 }
@@ -76,20 +145,26 @@ export const home = async (req, res) => {
   const db = req.app.locals.db;
   const [item, about, areas, posts, gallery] = await Promise.all([
     db.page.findFirst({ where: { slug: 'inicio', published: true } }),
-    db.page.findFirst({ where: { slug: 'sobre-nos', published: true } }),
+    db.page.findFirst({
+      where: { slug: 'sobre-nos', published: true },
+      select: { title: true, subtitle: true },
+    }),
     db.workArea.findMany({
       where: { active: true },
-      orderBy: [{ displayOrder: 'asc' }, { title: 'asc' }],
+      orderBy: listing.areas.orderBy,
+      select: cardSelect.workArea,
       take: 6,
     }),
     db.post.findMany({
       where: published(),
-      orderBy: { publishedAt: 'desc' },
+      orderBy: listing.blog.orderBy,
+      select: cardSelect.post,
       take: 3,
     }),
     db.galleryItem.findMany({
       where: { published: true },
-      orderBy: { activityDate: 'desc' },
+      orderBy: listing.gallery.orderBy,
+      select: cardSelect.galleryItem,
       take: 3,
     }),
   ]);
@@ -107,48 +182,32 @@ export const page = async (req, res) => {
 };
 
 export const list = (type) => async (req, res) => {
-  const config = {
-    blog: {
-      model: 'post',
-      where: published(),
-      orderBy: { publishedAt: 'desc' },
-      title: 'Blog e notícias',
-      base: '/blog',
-      field: 'featuredImage',
-    },
-    areas: {
-      model: 'workArea',
-      where: { active: true },
-      orderBy: [{ displayOrder: 'asc' }, { title: 'asc' }],
-      title: 'Linhas de trabalho',
-      base: '/linhas-de-trabalho',
-      field: 'image',
-    },
-    gallery: {
-      model: 'galleryItem',
-      where: { published: true },
-      orderBy: { activityDate: 'desc' },
-      title: 'Galeria de atividades',
-      base: '/galeria',
-      field: 'image',
-    },
-  }[type];
-
-  if (type === 'blog' && typeof req.query.category === 'string')
-    config.where.category = { slug: req.query.category.slice(0, 180) };
-
+  const config = requireConfig(listing[type], type);
+  const { category } =
+    type === 'blog' ? parse(publicListQuery, req.query) : { category: '' };
+  const where = category
+    ? { ...config.where(), category: { slug: category } }
+    : config.where();
   const { page, take, skip } = pagination(req.query.page);
   const db = req.app.locals.db;
   const [items, count, categories] = await Promise.all([
     db[config.model].findMany({
-      where: config.where,
+      where,
       orderBy: config.orderBy,
+      select: cardSelect[config.model],
       take,
       skip,
     }),
-    db[config.model].count({ where: config.where }),
-    type === 'blog' ? db.category.findMany({ orderBy: { name: 'asc' } }) : [],
+    db[config.model].count({ where }),
+    type === 'blog'
+      ? db.category.findMany({
+          orderBy: [{ name: 'asc' }, { id: 'asc' }],
+          select: { name: true, slug: true },
+        })
+      : [],
   ]);
+  const pages = Math.max(1, Math.ceil(count / take));
+  if (page > pages) throw httpError(404, 'Página não encontrada.');
 
   render(
     res,
@@ -159,17 +218,20 @@ export const list = (type) => async (req, res) => {
       config,
       type,
       categories,
-      selectedCategory: req.query.category || '',
+      selectedCategory: category,
       page,
-      pages: Math.ceil(count / take),
+      pages,
       base: config.base,
-      filter: typeof req.query.category === 'string' ? req.query.category : '',
+      filter: category,
+      currentUrl: listingUrl(res.locals.appUrl, config.base, page, category),
     }
   );
 };
 
 export const detail = (type) => async (req, res) => {
   const db = req.app.locals.db;
+  if (!['blog', 'areas'].includes(type))
+    throw new TypeError(`Tipo público desconhecido: ${type}`);
   const item =
     type === 'blog'
       ? await db.post.findFirst({
