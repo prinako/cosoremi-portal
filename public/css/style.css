@@ -766,6 +766,7 @@ p {
   }
 }
 
+
 /* Shared CMS forms and accessible institutional content. */
 :focus-visible {
   outline: 3px solid var(--blue-700);
@@ -834,6 +835,11 @@ p {
   text-decoration: underline;
   text-decoration-thickness: 0.12em;
   text-underline-offset: 0.16em;
+}
+.blog-content{
+  max-width: 880px;
+  margin-inline: auto;
+  margin-bottom: 32px;
 }
 .article-image {
   width: 100%;
