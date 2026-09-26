@@ -78,6 +78,18 @@ export const contact = z.object({
   subject: z.enum(subjects),
   message: text(5000, 10),
 });
+export const publicListQuery = z.object({
+  category: z
+    .union([
+      z.literal(''),
+      z
+        .string()
+        .trim()
+        .max(180)
+        .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Categoria inválida.'),
+    ])
+    .default(''),
+});
 export const login = z.object({
   email: z
     .email()
