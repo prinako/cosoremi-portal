@@ -380,7 +380,7 @@ p {
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
   gap: 22px;
 }
 
@@ -396,6 +396,7 @@ p {
 
 .image-card {
   overflow: hidden;
+  height: 30rem;
 }
 
 .card-image {
@@ -820,6 +821,7 @@ select {
   font-size: clamp(2.3rem, 5vw, 4rem);
   line-height: 1.12;
 }
+
 @media (max-width: 979px) {
   .nav-menu:not(.is-open) {
     visibility: hidden;
