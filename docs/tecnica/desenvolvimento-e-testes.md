@@ -19,6 +19,7 @@ cp .env.example .env
 npm run db:generate
 npm run db:deploy
 npm run db:seed
+npm run build:editor
 npm run dev
 ```
 
@@ -66,6 +67,7 @@ docker compose -f docker-compose.dev.yml down
 | ----------------------------------- | --------------------------------------------------------- |
 | `npm start`                         | Inicia a aplicação sem observador.                        |
 | `npm run dev`                       | Inicia com Nodemon.                                       |
+| `npm run build:editor`              | Atualiza os módulos Editor.js locais e seu manifesto.     |
 | `npm test`                          | Executa testes rápidos de unidade, segurança e templates. |
 | `npm run test:integration`          | Executa fluxos HTTP com PostgreSQL real.                  |
 | `npm run db:generate`               | Gera o cliente Prisma.                                    |
@@ -123,3 +125,18 @@ Execute também `npm run test:integration` quando alterar banco, autenticação,
 7. Atualize a documentação funcional e técnica.
 
 Não aceite nomes de modelos ou campos arbitrários vindos do cliente. Mantenha a lista de recursos e operações permitidas no servidor.
+
+## Evolução do conteúdo estruturado
+
+As dependências Editor.js ficam fixadas, não usam CDN e oferecem distribuições
+ESM prontas para navegador. Após qualquer atualização intencional dessas
+dependências, execute `npm run build:editor`, revise o manifesto e o diff dos
+arquivos vendorizados e rode os testes de XSS. A CI reconstrói esses arquivos e
+falha quando o resultado diverge do conteúdo versionado.
+
+Para adicionar um tipo de bloco, implemente primeiro o schema Zod estrito, os
+limites, a sanitização de campos inline, a conversão para texto simples e o
+renderizador semântico. Só depois registre a ferramenta no cliente. Inclua
+testes de documento válido, documento hostil e saída HTML exata. Raw HTML não é
+suportado. Não adicione imagens inline sem projetar uma integração explícita com
+o pipeline seguro de uploads.

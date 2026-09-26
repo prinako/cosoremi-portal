@@ -4,7 +4,9 @@ on:
   push:
     branches: [main, test, dev]
   pull_request:
-    branches: [main, v*.*]
+    branches: [main, test, v*.*]
+  merge_group:
+    types: [checks_requested]
 
 permissions:
   contents: read
@@ -48,7 +50,12 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+          cache-dependency-path: package-lock.json
       - run: npm ci
+      - name: Verify self-hosted editor assets
+        run: |
+          npm run build:editor
+          git diff --exit-code -- public/vendor/editorjs
       - run: npm run db:generate
       - run: npm run format:check
       - run: npm test
@@ -85,9 +92,9 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: docker/setup-buildx-action@v4
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
       - name: Build image
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: .
           file: ${{ matrix.dockerfile }}
@@ -107,6 +114,8 @@ jobs:
             test ! -d /app/node_modules/nodemon
             test ! -d /app/node_modules/supertest
             test ! -d /app/node_modules/prettier
+            test -f /app/public/vendor/editorjs/editorjs.mjs
+            test -f /app/public/vendor/editorjs/manifest.json
             node -e "require(\"@prisma/client\"); require(\"bcrypt\"); require(\"sharp\")"
           '
       - name: Start stack and check readiness
@@ -135,22 +144,22 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: docker/setup-buildx-action@v4
-      - uses: docker/login-action@v4
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Image metadata
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
           images: ghcr.io/prinako/cosoremi-portal
           tags: |
             type=raw,value=latest
             type=raw,value=${{ github.sha }}
       - name: Publish
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: .
           file: Dockerfile
@@ -159,3 +168,18 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=prod
           cache-to: type=gha,mode=max,scope=prod
+
+  all-checks:
+    name: All checks
+    needs: [validate, images]
+    if: always()
+    permissions: {}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Fail closed when a required job did not succeed
+        if: >-
+          needs.validate.result != 'success' ||
+          needs.images.result != 'success'
+        run: exit 1
+      - run: echo 'All required checks passed.'

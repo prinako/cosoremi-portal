@@ -21,12 +21,14 @@ const date = z.preprocess((v) => {
 }, z.coerce.date().nullable());
 const slugField = text(180, 1).transform(slug).pipe(text(180, 1));
 const seo = { seoTitle: optional(180), seoDescription: optional(320) };
+const structuredContent = z.string().max(280000).optional();
 export const schemas = {
   pages: z.object({
     title: text(180, 1),
     slug: slugField,
     subtitle: optional(500),
     content: text(100000),
+    contentBlocks: structuredContent,
     published: bool,
     ...seo,
   }),
@@ -34,7 +36,8 @@ export const schemas = {
     title: text(180, 1),
     slug: slugField,
     summary: optional(500),
-    content: text(100000, 1),
+    content: text(100000),
+    contentBlocks: structuredContent,
     status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']),
     publishedAt: date,
     categoryId: z.preprocess(
@@ -48,7 +51,8 @@ export const schemas = {
     title: text(180, 1),
     slug: slugField,
     summary: optional(500),
-    content: text(100000, 1),
+    content: text(100000),
+    contentBlocks: structuredContent,
     displayOrder: z.coerce.number().int().min(0).max(10000),
     active: bool,
     ...seo,

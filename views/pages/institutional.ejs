@@ -12,7 +12,7 @@
     alt="<%= item.title %>"
     loading="lazy"
   /><% } %>
-  <div class="prose"><%= item.content %></div>
+  <div class="prose rich-content"><%- contentHtml %></div>
   <% if(item.slug === 'doar') { %>
   <h2>Como contribuir</h2>
   <p class="prose"><%= settings.donation_text %></p>

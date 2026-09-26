@@ -40,6 +40,7 @@ const expectedFields = {
     'slug',
     'subtitle',
     'content',
+    'contentBlocks',
     'published',
     'image',
     'seoTitle',
@@ -51,6 +52,7 @@ const expectedFields = {
     'slug',
     'summary',
     'content',
+    'contentBlocks',
     'status',
     'categoryId',
     'publishedAt',
@@ -65,6 +67,7 @@ const expectedFields = {
     'slug',
     'summary',
     'content',
+    'contentBlocks',
     'displayOrder',
     'active',
     'image',
@@ -102,6 +105,7 @@ const render = (resource, item = {}) =>
     item,
     categories: [{ id: 'category-1', name: 'Categoria' }],
     csrf,
+    cspNonce: 'editor-style-nonce',
     user,
   });
 
@@ -118,10 +122,11 @@ test('admin resource forms preserve fields for create and edit', async () => {
         assert.ok(control, `${resource}.${field.name} control not rendered`);
         assert.match(control[0], new RegExp(`maxlength="${field.maxLength}"`));
         assert.equal(/\brequired\b/.test(control[0]), Boolean(field.required));
-        if (field.type === 'textarea')
+        if (['textarea', 'rich-content'].includes(field.type))
           assert.match(control[0], new RegExp(`rows="${field.rows}"`));
         assert.ok(
-          html.includes(`<label for="${field.name}">${field.label}</label>`),
+          html.includes(`for="${field.name}"`) &&
+            html.includes(`>${field.label}</label>`),
           `${resource}.${field.name} label not rendered`
         );
       }
@@ -131,8 +136,11 @@ test('admin resource forms preserve fields for create and edit', async () => {
 
 test('admin form instructions describe their controls', async () => {
   const post = await render('posts', fixtures.posts);
-  assert.match(post, /id="content"[^>]*aria-describedby="plain-text-help"/s);
-  assert.match(post, /id="plain-text-help"/);
+  assert.match(post, /id="content"[^>]*aria-describedby="rich-content-help"/s);
+  assert.match(post, /id="rich-content-help"/);
+  assert.match(post, /data-editor-holder[^>]*aria-labelledby="content-label"/s);
+  assert.match(post, /data-editor-style-nonce="editor-style-nonce"/);
+  assert.match(post, /name="contentBlocks"[^>]*disabled/s);
   assert.match(
     post,
     /id="publishedAt"[^>]*aria-describedby="published-at-help"/s
@@ -168,6 +176,26 @@ test('admin forms preserve required fields and upload behavior', async () => {
       /name="removeImage"/
     );
   assert.doesNotMatch(editedGallery, /name="removeImage"/);
+});
+
+test('only primary long-form fields use the progressive rich editor', async () => {
+  for (const resource of ['pages', 'posts', 'work-areas']) {
+    const html = await render(resource, fixtures[resource]);
+    assert.match(html, /data-rich-content-field/);
+    assert.equal(
+      resources[resource].fields.find((field) => field.name === 'content').type,
+      'rich-content'
+    );
+  }
+  for (const resource of ['categories', 'gallery'])
+    assert.doesNotMatch(
+      await render(resource, fixtures[resource]),
+      /data-rich-content-field/
+    );
+  assert.equal(
+    resources.posts.fields.find((field) => field.name === 'summary').type,
+    'textarea'
+  );
 });
 
 test('existing upload preview uses contextual escaped alternative text', async () => {

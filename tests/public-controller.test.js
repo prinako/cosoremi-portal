@@ -107,3 +107,66 @@ test('settings reads are cached and can be invalidated', async () => {
   settings.invalidate(db);
   assert.equal((await settings.read(db)).site_name, 'COSOREMI 2');
 });
+
+test('full public content receives trusted semantic HTML with legacy fallback', async () => {
+  const structured = {
+    id: 'page-1',
+    title: 'Sobre',
+    slug: 'sobre-nos',
+    content: 'fallback',
+    contentBlocks: {
+      version: 1,
+      blocks: [
+        { type: 'heading', data: { text: 'Atuação', level: 2 } },
+        {
+          type: 'list',
+          data: {
+            style: 'unordered',
+            meta: {},
+            items: [{ content: 'Proteção', meta: {}, items: [] }],
+          },
+        },
+      ],
+    },
+  };
+  const pageResponse = response();
+  await controller.page(
+    {
+      params: { slug: 'sobre-nos' },
+      path: '/sobre-nos',
+      app: { locals: { db: { page: { findFirst: async () => structured } } } },
+    },
+    pageResponse
+  );
+  assert.equal(pageResponse.view, 'pages/institutional');
+  assert.equal(
+    pageResponse.data.contentHtml,
+    '<h2>Atuação</h2><ul><li>Proteção</li></ul>'
+  );
+
+  for (const type of ['blog', 'areas']) {
+    const model = type === 'blog' ? 'post' : 'workArea';
+    const item = {
+      title: 'Legado',
+      slug: 'legado',
+      content: '<img src=x onerror=alert(1)>\n\nSegundo parágrafo',
+      contentBlocks: null,
+      ...(type === 'blog'
+        ? { author: { name: 'Autora' }, category: null }
+        : {}),
+    };
+    const detailResponse = response();
+    await controller.detail(type)(
+      {
+        params: { slug: 'legado' },
+        app: { locals: { db: { [model]: { findFirst: async () => item } } } },
+      },
+      detailResponse
+    );
+    assert.equal(detailResponse.view, 'pages/detail');
+    assert.equal(
+      detailResponse.data.contentHtml,
+      '<p>&lt;img src=x onerror=alert(1)&gt;</p><p>Segundo parágrafo</p>'
+    );
+  }
+});

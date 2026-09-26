@@ -19,7 +19,10 @@ export default (error, req, res, next) => {
   }
   if (error.name === 'MulterError') {
     status = 422;
-    message = 'Upload inválido. Envie uma imagem de até 5 MB.';
+    message =
+      error.code === 'LIMIT_FIELD_VALUE'
+        ? 'O conteúdo enviado excede o limite permitido.'
+        : 'Upload inválido. Envie uma imagem de até 5 MB.';
   }
   if (status >= 500)
     console.error(

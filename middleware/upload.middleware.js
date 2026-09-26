@@ -6,7 +6,7 @@ const uploader = multer({
     fileSize: 5 * 1024 * 1024,
     files: 1,
     fields: 30,
-    fieldSize: 110000,
+    fieldSize: 300000,
     parts: 32,
   },
 });
