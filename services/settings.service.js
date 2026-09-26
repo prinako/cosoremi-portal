@@ -1,5 +1,5 @@
-const { z } = require('zod');
-const { parse } = require('../validators/content');
+import { z } from 'zod';
+import { parse } from '../validators/content.js';
 
 const short = z.string().trim().max(320);
 const phone = z
@@ -19,7 +19,7 @@ const color = z
   .trim()
   .regex(/^#[0-9a-fA-F]{6}$/, 'Use uma cor hexadecimal no formato #RRGGBB.');
 
-exports.fields = {
+export const fields = {
   site_name: ['Nome da organização', short.min(1)],
   site_description: ['Descrição do site', short],
   primary_color: ['Cor primária', color],
@@ -46,24 +46,24 @@ exports.fields = {
   donate_cta: ['Botão de doação', short.min(1)],
 };
 
-exports.defaults = {
+export const defaults = {
   primary_color: '#0f5f46',
   secondary_color: '#f5c84b',
   site_logo: '',
 };
 
-exports.read = async (db) => ({
-  ...exports.defaults,
+export const read = async (db) => ({
+  ...defaults,
   ...Object.fromEntries(
     (await db.setting.findMany()).map((s) => [s.key, s.value])
   ),
 });
 
-exports.validate = (body) =>
+export const validate = (body) =>
   parse(
     z.object(
       Object.fromEntries(
-        Object.entries(exports.fields).map(([key, [, schema]]) => [key, schema])
+        Object.entries(fields).map(([key, [, schema]]) => [key, schema])
       )
     ),
     body

@@ -1,10 +1,12 @@
-require('dotenv').config({ quiet: true });
-const db = require('../config/database');
-const bcrypt = require('bcrypt');
-const slug = require('../utils/slug');
-const { password } = require('../validators/content');
-const { z } = require('zod');
-const { httpError } = require('../utils/http');
+import bcrypt from 'bcrypt';
+import dotenv from 'dotenv';
+import { z } from 'zod';
+import db from '../config/database.js';
+import { httpError } from '../utils/http.js';
+import slug from '../utils/slug.js';
+import { password } from '../validators/content.js';
+
+dotenv.config({ quiet: true });
 const settings = {
   site_name: 'COSOREMI',
   site_description:

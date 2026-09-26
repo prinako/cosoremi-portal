@@ -1,13 +1,16 @@
-const { test, before, after } = require('node:test');
-const assert = require('node:assert/strict');
-const request = require('supertest');
-const bcrypt = require('bcrypt');
-const sharp = require('sharp');
-const { PrismaClient } = require('@prisma/client');
-const session = require('express-session');
-const PgStore = require('connect-pg-simple')(session);
-const createApp = require('../../app');
-const { fields } = require('../../services/settings.service');
+import assert from 'node:assert/strict';
+import { after, before, test } from 'node:test';
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
+import connectPgSimple from 'connect-pg-simple';
+import session from 'express-session';
+import sharp from 'sharp';
+import request from 'supertest';
+import createApp from '../../app.js';
+import { fields } from '../../services/settings.service.js';
+import { remove as removeUpload } from '../../services/upload.service.js';
+
+const PgStore = connectPgSimple(session);
 const enabled = Boolean(process.env.TEST_DATABASE_URL);
 let db, app, store, admin, editor, manager, superUser, editorUser, managerUser;
 const stamp = `test-${Date.now()}`;
@@ -79,8 +82,7 @@ after(async () => {
   const images = await db.galleryItem.findMany({
     where: { title: { startsWith: stamp } },
   });
-  for (const item of images)
-    await require('../../services/upload.service').remove(item.image);
+  for (const item of images) await removeUpload(item.image);
   await db.galleryItem.deleteMany({ where: { title: { startsWith: stamp } } });
   await db.contact.deleteMany({ where: { email: `${stamp}@example.org` } });
   await db.auditLog.deleteMany({

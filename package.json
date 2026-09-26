@@ -1,6 +1,7 @@
 {
   "name": "cosoremi-portal",
   "version": "1.0.0",
+  "type": "module",
   "description": "Portal institucional e sistema de gestão de conteúdo do COSOREMI.",
   "main": "server.js",
   "scripts": {

@@ -2,7 +2,7 @@
 
 Portal institucional e CMS do **COSOREMI — Comité de Solidariedade dos Refugiados e Migrantes**. Administradores gerenciam conteúdo público em `/admin`, sem editar código.
 
-Express + EJS renderizam as páginas no servidor. PostgreSQL armazena conteúdo e sessões; Prisma 6 gerencia os modelos e migrações. A interface usa JavaScript e CSS, sem framework frontend. Licença MIT.
+Express + EJS renderizam as páginas no servidor em JavaScript ESM nativo. PostgreSQL armazena conteúdo e sessões; Prisma 6 gerencia os modelos e migrações. A interface usa JavaScript e CSS, sem framework frontend. Licença MIT.
 
 Consulte o [índice de documentação](docs/README.md) para o guia do CMS, arquitetura, desenvolvimento e operação.
 
@@ -22,7 +22,7 @@ cp .env.example .env
 Edite `.env` antes de continuar. Para gerar um segredo de sessão:
 
 ```bash
-node -e "console.log(require('node:crypto').randomBytes(48).toString('hex'))"
+node --input-type=module -e "import { randomBytes } from 'node:crypto'; console.log(randomBytes(48).toString('hex'))"
 ```
 
 ### PostgreSQL local com Docker
@@ -170,7 +170,7 @@ Monte um volume persistente para `public/uploads` e faça backup junto ao Postgr
 
 Antes de publicar: configure domínio/HTTPS, proxy confiável, banco com usuário de privilégios mínimos, segredo aleatório, backups/restauração, monitoramento e volume de uploads. Preencha e revise contatos, informações de emergência e doação e textos institucionais. Restrinja a porta do Node ao proxy. O aplicativo não oferece recuperação de senha por e-mail; mantenha uma segunda conta SUPER_ADMIN protegida para recuperação administrativa.
 
-Prisma permanece na linha 6 para manter a integração CommonJS simples. `deepmerge-ts` recebe override para a versão corrigida; a CLI e migrações são verificadas pelos comandos abaixo. Referências: [Prisma Migrate](https://www.prisma.io/docs/orm/v6/prisma-migrate/getting-started) e [sessões Express](https://expressjs.com/en/resources/middleware/session/).
+Prisma permanece na linha 6 com o gerador `prisma-client-js`. `deepmerge-ts` recebe override para a versão corrigida; a CLI e migrações são verificadas pelos comandos abaixo. Referências: [Prisma Migrate](https://www.prisma.io/docs/orm/v6/prisma-migrate/getting-started) e [sessões Express](https://expressjs.com/en/resources/middleware/session/).
 
 ## Verificação
 

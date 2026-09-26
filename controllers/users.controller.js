@@ -1,7 +1,8 @@
-const service = require('../services/user.service');
-const { parse, user } = require('../validators/content');
-const pagination = require('../utils/pagination');
-exports.list = async (req, res) => {
+import * as service from '../services/user.service.js';
+import pagination from '../utils/pagination.js';
+import { parse, user } from '../validators/content.js';
+
+export const list = async (req, res) => {
   const { page, take, skip } = pagination(req.query.page, 20);
   const [items, count] = await Promise.all([
     req.app.locals.db.user.findMany({
@@ -19,7 +20,7 @@ exports.list = async (req, res) => {
     base: '/admin/users',
   });
 };
-exports.form = async (req, res) =>
+export const form = async (req, res) =>
   res.render('admin/user-form', {
     item: req.params.id
       ? await req.app.locals.db.user.findUniqueOrThrow({
@@ -28,7 +29,7 @@ exports.form = async (req, res) =>
         })
       : {},
   });
-exports.save = async (req, res) => {
+export const save = async (req, res) => {
   await service.save(
     req.app.locals.db,
     req.params.id,

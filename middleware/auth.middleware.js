@@ -1,5 +1,6 @@
-const { asyncRoute, httpError } = require('../utils/http');
-exports.authenticate = asyncRoute(async (req, res, next) => {
+import { asyncRoute, httpError } from '../utils/http.js';
+
+export const authenticate = asyncRoute(async (req, res, next) => {
   if (!req.session.userId) return res.redirect('/admin/login');
   const user = await req.app.locals.db.user.findUnique({
     where: { id: req.session.userId },
@@ -20,7 +21,7 @@ exports.authenticate = asyncRoute(async (req, res, next) => {
   res.locals.user = user;
   next();
 });
-exports.roles =
+export const roles =
   (...roles) =>
   (req, res, next) =>
     roles.includes(req.user?.role)

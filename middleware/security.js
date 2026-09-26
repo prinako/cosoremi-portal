@@ -1,12 +1,13 @@
-const crypto = require('node:crypto');
-const { httpError } = require('../utils/http');
-exports.token = (req, res, next) => {
+import crypto from 'node:crypto';
+import { httpError } from '../utils/http.js';
+
+export const token = (req, res, next) => {
   res.set('Cache-Control', 'no-store');
   req.session.csrf ||= crypto.randomBytes(32).toString('hex');
   res.locals.csrf = req.session.csrf;
   next();
 };
-exports.csrf = (req, res, next) => {
+export const csrf = (req, res, next) => {
   const submitted = req.body?._csrf || req.get('x-csrf-token');
   const expected = req.session.csrf;
   if (

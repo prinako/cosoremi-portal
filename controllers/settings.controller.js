@@ -1,14 +1,14 @@
-const service = require('../services/settings.service');
-const uploads = require('../services/upload.service');
-const { audit } = require('../services/content.service');
+import { audit } from '../services/content.service.js';
+import * as service from '../services/settings.service.js';
+import * as uploads from '../services/upload.service.js';
 
-exports.form = async (req, res) =>
+export const form = async (req, res) =>
   res.render('admin/settings', {
     fields: service.fields,
     values: await service.read(req.app.locals.db),
   });
 
-exports.save = async (req, res) => {
+export const save = async (req, res) => {
   const data = service.validate(req.body);
   const current = await service.read(req.app.locals.db);
   const uploadedLogo = await uploads.save(req.file, 'branding');

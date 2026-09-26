@@ -1,7 +1,7 @@
-const { test } = require('node:test');
-const assert = require('node:assert/strict');
-const settings = require('../services/settings.service');
-const publicController = require('../controllers/public.controller');
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import * as publicController from '../controllers/public.controller.js';
+import * as settings from '../services/settings.service.js';
 
 test('branding colors accept only six-digit hexadecimal values', () => {
   const primary = settings.fields.primary_color[1];

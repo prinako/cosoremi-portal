@@ -1,16 +1,25 @@
-const express = require('express');
-const helmet = require('helmet');
-const path = require('node:path');
-const { rateLimit } = require('express-rate-limit');
-const { httpError } = require('./utils/http');
-module.exports = function createApp({ db, env, sessionStore } = {}) {
+import path from 'node:path';
+import express from 'express';
+import { rateLimit } from 'express-rate-limit';
+import helmet from 'helmet';
+import dbDefault from './config/database.js';
+import environment from './config/env.js';
+import createSession from './config/session.js';
+import { health } from './controllers/health.controller.js';
+import errorMiddleware from './middleware/error.middleware.js';
+import adminRouter from './routes/admin.routes.js';
+import authRouter from './routes/auth.routes.js';
+import publicRouter from './routes/public.routes.js';
+import { httpError } from './utils/http.js';
+
+export default function createApp({ db, env, sessionStore } = {}) {
   const app = express();
-  app.locals.env = env || require('./config/env')();
-  app.locals.db = db || require('./config/database');
+  app.locals.env = env || environment();
+  app.locals.db = db || dbDefault;
   app.disable('x-powered-by');
   if (process.env.TRUST_PROXY === '1') app.set('trust proxy', 1);
   app.set('view engine', 'ejs');
-  app.set('views', path.join(__dirname, 'views'));
+  app.set('views', path.join(import.meta.dirname, 'views'));
   app.use(
     helmet({
       contentSecurityPolicy: {
@@ -25,17 +34,17 @@ module.exports = function createApp({ db, env, sessionStore } = {}) {
     })
   );
   // Readiness must work without sessions, seeded content or rate-limit state.
-  app.get('/health', require('./controllers/health.controller').health);
+  app.get('/health', health);
   app.use(
     '/uploads',
-    express.static(path.join(__dirname, 'public/uploads'), {
+    express.static(path.join(import.meta.dirname, 'public/uploads'), {
       dotfiles: 'deny',
       index: false,
       maxAge: '1d',
     })
   );
   app.use(
-    express.static(path.join(__dirname, 'public'), {
+    express.static(path.join(import.meta.dirname, 'public'), {
       dotfiles: 'deny',
       index: false,
     })
@@ -52,16 +61,16 @@ module.exports = function createApp({ db, env, sessionStore } = {}) {
   app.use(
     express.urlencoded({ extended: false, limit: '150kb', parameterLimit: 40 })
   );
-  app.use(require('./config/session')(app.locals.env, sessionStore));
+  app.use(createSession(app.locals.env, sessionStore));
   app.use('/admin', (req, res, next) => {
     res.set('Cache-Control', 'no-store');
     res.set('X-Robots-Tag', 'noindex, nofollow');
     next();
   });
-  app.use('/admin', require('./routes/auth.routes'));
-  app.use('/admin', require('./routes/admin.routes'));
-  app.use(require('./routes/public.routes'));
+  app.use('/admin', authRouter);
+  app.use('/admin', adminRouter);
+  app.use(publicRouter);
   app.use((req, res, next) => next(httpError(404, 'Página não encontrada.')));
-  app.use(require('./middleware/error.middleware'));
+  app.use(errorMiddleware);
   return app;
-};
+}

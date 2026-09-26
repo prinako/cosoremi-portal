@@ -1,6 +1,6 @@
-const environment = require('./config/env');
-const createApp = require('./app');
-const db = require('./config/database');
+import createApp from './app.js';
+import db from './config/database.js';
+import environment from './config/env.js';
 async function start() {
   const env = environment();
   await db.$connect();

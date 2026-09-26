@@ -1,11 +1,15 @@
-const { test } = require('node:test');
-const assert = require('node:assert/strict');
-const { contact, schemas, password } = require('../validators/content');
-const { roles } = require('../middleware/auth.middleware');
-const { csrf } = require('../middleware/security');
-const slug = require('../utils/slug');
-const { published } = require('../services/content.service');
-const settings = require('../services/settings.service');
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { test } from 'node:test';
+import ejs from 'ejs';
+import { roles } from '../middleware/auth.middleware.js';
+import { csrf } from '../middleware/security.js';
+import { published } from '../services/content.service.js';
+import * as settings from '../services/settings.service.js';
+import * as userService from '../services/user.service.js';
+import slug from '../utils/slug.js';
+import { contact, password, schemas } from '../validators/content.js';
 test('contact rejects invalid, overlong and unexpected subject fields', () => {
   const valid = {
     name: 'Maria Silva',
@@ -94,7 +98,6 @@ test('social settings reject script and insecure URL schemes', () => {
   );
 });
 test('the last active SUPER_ADMIN cannot be deactivated or demoted', async () => {
-  const service = require('../services/user.service');
   let locked = false;
   let changed = false;
   const tx = {
@@ -122,16 +125,13 @@ test('the last active SUPER_ADMIN cannot be deactivated or demoted', async () =>
     { active: true, role: 'ADMIN' },
   ]) {
     await assert.rejects(
-      service.save(db, 'last', { ...data, password: '' }, 'last'),
+      userService.save(db, 'last', { ...data, password: '' }, 'last'),
       { status: 422 }
     );
   }
   assert.equal(changed, false);
 });
 test('all EJS templates compile', () => {
-  const fs = require('node:fs');
-  const path = require('node:path');
-  const ejs = require('ejs');
   function walk(directory) {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
       const filename = path.join(directory, entry.name);
@@ -142,5 +142,5 @@ test('all EJS templates compile', () => {
         );
     }
   }
-  walk(path.join(__dirname, '..', 'views'));
+  walk(path.join(import.meta.dirname, '..', 'views'));
 });

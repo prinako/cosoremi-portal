@@ -1,9 +1,10 @@
-const { parse, login } = require('../validators/content');
-const auth = require('../services/auth.service');
-const { audit } = require('../services/content.service');
-exports.form = (req, res) => res.render('admin/auth/login', { error: '' });
-exports.login = async (req, res) => {
-  const input = parse(login, req.body);
+import * as auth from '../services/auth.service.js';
+import { audit } from '../services/content.service.js';
+import { login as loginSchema, parse } from '../validators/content.js';
+
+export const form = (req, res) => res.render('admin/auth/login', { error: '' });
+export const login = async (req, res) => {
+  const input = parse(loginSchema, req.body);
   const user = await auth.verify(
     req.app.locals.db,
     input.email,
@@ -24,7 +25,7 @@ exports.login = async (req, res) => {
   );
   res.redirect('/admin');
 };
-exports.logout = (req, res, next) =>
+export const logout = (req, res, next) =>
   req.session.destroy((err) => {
     if (err) return next(err);
     res.clearCookie('cosoremi.sid');

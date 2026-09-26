@@ -1,5 +1,6 @@
-const { httpError } = require('../utils/http');
-exports.resources = {
+import { httpError } from '../utils/http.js';
+
+export const resources = {
   pages: {
     model: 'page',
     label: 'Páginas',
@@ -34,25 +35,25 @@ exports.resources = {
     roles: ['SUPER_ADMIN', 'ADMIN', 'EDITOR'],
   },
 };
-exports.audit = (db, userId, action, entity, entityId) =>
+export const audit = (db, userId, action, entity, entityId) =>
   db.auditLog.create({ data: { userId, action, entity, entityId } });
-exports.published = () => ({
+export const published = () => ({
   status: 'PUBLISHED',
   publishedAt: { lte: new Date() },
 });
-exports.reservedPages = [
+export const reservedPages = [
   'inicio',
   'sobre-nos',
   'doar',
   'emergencia',
   'contato',
 ];
-exports.save = async (db, resource, id, data, userId) =>
+export const save = async (db, resource, id, data, userId) =>
   db.$transaction(async (tx) => {
-    const spec = exports.resources[resource];
+    const spec = resources[resource];
     if (id && resource === 'pages') {
       const old = await tx.page.findUniqueOrThrow({ where: { id } });
-      if (exports.reservedPages.includes(old.slug) && old.slug !== data.slug)
+      if (reservedPages.includes(old.slug) && old.slug !== data.slug)
         throw httpError(422, 'O endereço desta página institucional é fixo.');
     }
     if (resource === 'posts') {
@@ -63,7 +64,7 @@ exports.save = async (db, resource, id, data, userId) =>
     const item = id
       ? await tx[spec.model].update({ where: { id }, data })
       : await tx[spec.model].create({ data });
-    await exports.audit(
+    await audit(
       tx,
       userId,
       `${spec.model.toUpperCase()}_${id ? 'UPDATED' : 'CREATED'}`,
