@@ -134,7 +134,7 @@ test('plain text conversion escapes legacy markup and preserves paragraphs', () 
   assert.doesNotMatch(html, /<script>/);
 });
 
-test('content submissions derive plain text on the server and support fallback', () => {
+test('content submissions derive plain text on the server and preserve fallback content safely', () => {
   const data = normalizeContentSubmission('posts', {
     content: 'client value is not trusted',
     contentBlocks: serialized(paragraph('Servidor <strong>seguro</strong>')),
@@ -142,11 +142,51 @@ test('content submissions derive plain text on the server and support fallback',
   assert.equal(data.content, 'Servidor seguro');
   assert.equal(data.contentBlocks.version, 1);
 
-  const fallback = normalizeContentSubmission('work-areas', {
+  const storedDocument = parseRichContent(
+    serialized(
+      { type: 'heading', data: { text: 'Título mantido', level: 2 } },
+      paragraph('Texto <strong>rico</strong>')
+    )
+  );
+  const existing = {
+    content: 'Título mantido\n\nTexto rico',
+    contentBlocks: storedDocument,
+  };
+
+  const unchangedFallback = normalizeContentSubmission(
+    'work-areas',
+    { content: existing.content },
+    existing
+  );
+  assert.deepEqual(unchangedFallback.contentBlocks, storedDocument);
+  assert.equal(unchangedFallback.content, existing.content);
+
+  const editedFallback = normalizeContentSubmission(
+    'work-areas',
+    { content: 'Texto simples editado\n\nSegundo parágrafo' },
+    existing
+  );
+  assert.deepEqual(editedFallback.contentBlocks, {
+    version: 1,
+    blocks: [
+      paragraph('Texto simples editado'),
+      paragraph('Segundo parágrafo'),
+    ],
+  });
+  assert.equal(
+    editedFallback.content,
+    'Texto simples editado\n\nSegundo parágrafo'
+  );
+
+  const newFallback = normalizeContentSubmission('work-areas', {
     content: 'Texto simples',
   });
-  assert.equal(fallback.content, 'Texto simples');
-  assert.equal(fallback.contentBlocks, null);
+  assert.deepEqual(newFallback.contentBlocks, {
+    version: 1,
+    blocks: [paragraph('Texto simples')],
+  });
+  assert.equal(newFallback.content, 'Texto simples');
+
   assert.throws(() => normalizeContentSubmission('posts', { content: '' }), {
     status: 422,
   });
