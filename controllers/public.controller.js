@@ -1,4 +1,5 @@
 import { published } from '../services/content.service.js';
+import { renderRichContent } from '../services/rich-content.service.js';
 import * as settings from '../services/settings.service.js';
 import pagination from '../utils/pagination.js';
 import { httpError } from '../utils/http.js';
@@ -132,6 +133,10 @@ function render(res, view, item, extra = {}) {
       item.subtitle ||
       res.locals.pageDescription,
     image: item.heroImage || item.featuredImage || item.image || '',
+    contentHtml:
+      typeof item.content === 'string'
+        ? renderRichContent(item.contentBlocks, item.content)
+        : '',
     ...extra,
   });
 }

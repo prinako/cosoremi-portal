@@ -1,0 +1,32 @@
+{
+  "editorjs.mjs": {
+    "package": "@editorjs/editorjs",
+    "version": "2.31.7",
+    "license": "Apache-2.0",
+    "sha256": "631a4b6b5fc17a857277595f6cd078f588ae7739cbba385ba43a2bc7600dcd99"
+  },
+  "header.mjs": {
+    "package": "@editorjs/header",
+    "version": "2.8.9",
+    "license": "MIT",
+    "sha256": "009c47eb7fdacc523f7d2d44ef299d8b5bb58e7e3a160d3c04f03b2f24111115"
+  },
+  "list.mjs": {
+    "package": "@editorjs/list",
+    "version": "2.0.9",
+    "license": "MIT",
+    "sha256": "547514fda2e5b5cbc619e8a58991c7e25df846eb1976bb7d5255fce26930151d"
+  },
+  "quote.mjs": {
+    "package": "@editorjs/quote",
+    "version": "2.7.6",
+    "license": "MIT",
+    "sha256": "d72107499e06d25fee38bdd3d3e733c7c200a5bd2eb1bf6272d5f3199146d441"
+  },
+  "delimiter.mjs": {
+    "package": "@editorjs/delimiter",
+    "version": "1.4.2",
+    "license": "MIT",
+    "sha256": "113b3c99bf56a5322b5a625527732c448a094199cdcb1c92685c33be52d9e052"
+  }
+}

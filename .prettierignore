@@ -1,6 +1,8 @@
 node_modules
 package-lock.json
 public/uploads
+# Audited browser distributions are copied byte-for-byte from pinned packages.
+public/vendor/editorjs
 prisma/migrations
 .env*
 # EJS partials intentionally span opening/closing HTML tags across files.

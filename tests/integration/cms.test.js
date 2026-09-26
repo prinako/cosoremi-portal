@@ -115,6 +115,10 @@ test(
           const response = await request(app).get(route).expect(200);
           assert.match(response.text, /COSOREMI/);
           assert.ok(response.headers['content-security-policy']);
+          assert.match(
+            response.headers['content-security-policy'],
+            /style-src-attr 'none'/
+          );
           assert.doesNotMatch(
             response.text,
             /Visite Belém|hero-belem|passwordHash/
@@ -142,6 +146,15 @@ test(
     await t.test(
       'authentication, CSRF, cookie flags and backend role restrictions',
       async () => {
+        const loginPage = await request(app).get('/admin/login').expect(200);
+        assert.match(
+          loginPage.headers['content-security-policy'],
+          /style-src-attr 'none'/
+        );
+        assert.match(
+          loginPage.headers['content-security-policy'],
+          /style-src 'self' 'nonce-[A-Za-z0-9+/=]+'/
+        );
         await request(app)
           .post('/admin/login')
           .type('form')
@@ -199,6 +212,160 @@ test(
           .type('form')
           .send({ site_name: 'forged' })
           .expect(403);
+      }
+    );
+    await t.test(
+      'structured content creates and edits every supported CMS resource safely',
+      async () => {
+        const rich = (lead) =>
+          JSON.stringify({
+            version: 1,
+            blocks: [
+              { type: 'heading', data: { text: `${lead} título`, level: 2 } },
+              {
+                type: 'paragraph',
+                data: {
+                  text: `${lead} <strong>forte</strong> e <em>ênfase</em> com <a href="/contato">link</a>`,
+                },
+              },
+              {
+                type: 'list',
+                data: {
+                  style: 'unordered',
+                  meta: {},
+                  items: [{ content: 'Proteção', meta: {}, items: [] }],
+                },
+              },
+              {
+                type: 'quote',
+                data: { text: 'Acolher', caption: '', alignment: 'left' },
+              },
+              { type: 'delimiter', data: {} },
+            ],
+          });
+        const resources = [
+          {
+            resource: 'pages',
+            model: 'page',
+            slug: `${stamp}-rich-page`,
+            extra: { published: 'on' },
+            route: (slug) => `/paginas/${slug}`,
+          },
+          {
+            resource: 'posts',
+            model: 'post',
+            slug: `${stamp}-rich-post`,
+            extra: { status: 'PUBLISHED', publishedAt: '', categoryId: '' },
+            route: (slug) => `/blog/${slug}`,
+          },
+          {
+            resource: 'work-areas',
+            model: 'workArea',
+            slug: `${stamp}-rich-area`,
+            extra: { displayOrder: '3', active: 'on' },
+            route: (slug) => `/linhas-de-trabalho/${slug}`,
+          },
+        ];
+
+        for (const config of resources) {
+          const data = {
+            title: `Rich ${config.resource}`,
+            slug: config.slug,
+            content: 'Este valor do navegador não deve ser persistido.',
+            contentBlocks: rich('Inicial'),
+            ...config.extra,
+          };
+          await create(admin, config.resource, data).then((response) =>
+            assert.equal(response.status, 302)
+          );
+          let item = await db[config.model].findUniqueOrThrow({
+            where: { slug: config.slug },
+          });
+          assert.equal(item.contentBlocks.version, 1);
+          assert.match(item.content, /Inicial forte e ênfase com link/);
+          let page = await request(app)
+            .get(config.route(item.slug))
+            .expect(200);
+          assert.match(page.text, /<h2>Inicial título<\/h2>/);
+          assert.match(page.text, /<ul><li>Proteção<\/li><\/ul>/);
+          assert.match(page.text, /<strong>forte<\/strong>/);
+          assert.doesNotMatch(page.text, /\{"version"/);
+
+          const form = await admin
+            .get(`/admin/${config.resource}/${item.id}/edit`)
+            .expect(200);
+          assert.match(
+            form.headers['content-security-policy'],
+            /style-src-attr 'unsafe-inline'/
+          );
+          assert.match(form.text, /data-rich-content-field/);
+          assert.match(form.text, /name="contentBlocks"/);
+          await admin
+            .post(`/admin/${config.resource}/${item.id}/edit`)
+            .field('_csrf', csrf(form))
+            .field('title', item.title)
+            .field('slug', item.slug)
+            .field('content', 'Também não confiável')
+            .field('contentBlocks', rich('Editado'))
+            .field(
+              config.resource === 'posts'
+                ? 'status'
+                : config.resource === 'work-areas'
+                  ? 'active'
+                  : 'published',
+              config.resource === 'posts' ? 'PUBLISHED' : 'on'
+            )
+            .field(
+              config.resource === 'work-areas' ? 'displayOrder' : 'seoTitle',
+              config.resource === 'work-areas' ? '4' : ''
+            )
+            .field(
+              config.resource === 'posts' ? 'publishedAt' : 'seoDescription',
+              ''
+            )
+            .field(config.resource === 'posts' ? 'categoryId' : 'subtitle', '')
+            .expect(302);
+          item = await db[config.model].findUniqueOrThrow({
+            where: { id: item.id },
+          });
+          assert.match(item.content, /Editado forte/);
+          page = await request(app).get(config.route(item.slug)).expect(200);
+          assert.match(page.text, /<h2>Editado título<\/h2>/);
+        }
+
+        const hostile = {
+          title: 'Hostile rich post',
+          slug: `${stamp}-hostile-rich-post`,
+          content: 'fallback',
+          contentBlocks: JSON.stringify({
+            version: 1,
+            blocks: [
+              {
+                type: 'paragraph',
+                data: { text: '<a href="javascript:alert(1)">click</a>' },
+              },
+            ],
+          }),
+          status: 'DRAFT',
+          publishedAt: '',
+          categoryId: '',
+        };
+        assert.equal((await create(admin, 'posts', hostile)).status, 422);
+
+        const oversizedToken = csrf(
+          await admin.get('/admin/posts/new').expect(200)
+        );
+        await admin
+          .post('/admin/posts/new')
+          .field('_csrf', oversizedToken)
+          .field('title', 'Oversized')
+          .field('slug', `${stamp}-oversized`)
+          .field('content', 'fallback')
+          .field('contentBlocks', 'x'.repeat(300001))
+          .field('status', 'DRAFT')
+          .field('publishedAt', '')
+          .field('categoryId', '')
+          .expect(422);
       }
     );
     await t.test(

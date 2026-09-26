@@ -4,8 +4,44 @@
   <input type="hidden" name="_csrf" value="<%= csrf %>">
 
   <% fields.forEach(field => { %>
-  <label for="<%= field.name %>"><%= field.label %></label>
-  <% if (field.type === 'textarea') { %>
+  <label id="<%= field.name %>-label" for="<%= field.name %>"><%= field.label %></label>
+  <% if (field.type === 'rich-content') { %>
+  <div
+    class="rich-content-editor"
+    data-rich-content-field
+    data-editor-style-nonce="<%= typeof cspNonce === 'string' ? cspNonce : '' %>"
+  >
+    <textarea
+      id="<%= field.name %>"
+      name="<%= field.name %>"
+      maxlength="<%= field.maxLength %>"
+      rows="<%= field.rows %>"
+      aria-describedby="<%= field.describedBy %>"
+      <%= field.required ? 'required' : '' %>
+    ><%= item[field.name] || '' %></textarea>
+    <input
+      type="hidden"
+      name="contentBlocks"
+      value="<%= item.contentBlocks ? JSON.stringify(item.contentBlocks) : '' %>"
+      disabled
+    >
+    <div
+      class="rich-content-editor__surface"
+      data-editor-holder
+      role="group"
+      aria-labelledby="<%= field.name %>-label"
+      aria-describedby="<%= field.describedBy %>"
+      hidden
+    ></div>
+    <p
+      class="form-error"
+      data-editor-error
+      role="alert"
+      tabindex="-1"
+      hidden
+    ></p>
+  </div>
+  <% } else if (field.type === 'textarea') { %>
   <textarea
     id="<%= field.name %>"
     name="<%= field.name %>"
@@ -24,6 +60,13 @@
   >
   <% } %>
   <% }) %>
+
+  <% if (fields.some(field => field.type === 'rich-content')) { %>
+  <p id="rich-content-help">
+    Estruture o texto com títulos, listas, citações e links. Se o editor visual
+    não carregar, o campo de texto simples continua disponível.
+  </p>
+  <% } %>
 
   <% if (fields.some(field => field.describedBy === 'plain-text-help')) { %>
   <p id="plain-text-help">
