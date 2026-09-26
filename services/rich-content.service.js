@@ -302,14 +302,22 @@ export function renderRichContent(document, legacyContent = '') {
   return renderDocument(plainTextToRichContent(legacyContent));
 }
 
-export function normalizeContentSubmission(resource, data) {
+function fallbackDocument(data, existing) {
+  if (existing?.contentBlocks != null && data.content === existing.content) {
+    const stored = richContentSchema.safeParse(existing.contentBlocks);
+    if (stored.success) return stored.data;
+  }
+  return plainTextToRichContent(data.content);
+}
+
+export function normalizeContentSubmission(resource, data, existing = null) {
   if (!['pages', 'posts', 'work-areas'].includes(resource)) return data;
   const document =
     data.contentBlocks === undefined
-      ? null
+      ? fallbackDocument(data, existing)
       : parseRichContent(data.contentBlocks);
   delete data.contentBlocks;
-  if (document) data.content = richContentToPlainText(document);
+  data.content = richContentToPlainText(document);
   if (resource !== 'pages' && !data.content)
     throw httpError(422, 'Conteúdo: Use ao menos 1 caractere.');
   data.contentBlocks = document;
