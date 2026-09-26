@@ -52,12 +52,28 @@ export const defaults = {
   site_logo: '',
 };
 
-export const read = async (db) => ({
-  ...defaults,
-  ...Object.fromEntries(
-    (await db.setting.findMany()).map((s) => [s.key, s.value])
-  ),
-});
+const cache = new WeakMap();
+const cacheDuration = 5000;
+
+export const invalidate = (db) => cache.delete(db);
+
+export const read = async (db) => {
+  const cached = cache.get(db);
+  if (cached?.expiresAt > Date.now()) return cached.promise;
+
+  const promise = db.setting.findMany().then((rows) => ({
+    ...defaults,
+    ...Object.fromEntries(rows.map((setting) => [setting.key, setting.value])),
+  }));
+  cache.set(db, { expiresAt: Date.now() + cacheDuration, promise });
+
+  try {
+    return await promise;
+  } catch (error) {
+    cache.delete(db);
+    throw error;
+  }
+};
 
 export const validate = (body) =>
   parse(
