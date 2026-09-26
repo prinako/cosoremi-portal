@@ -7,6 +7,24 @@ export const resources = {
     image: 'heroImage',
     folder: 'pages',
     roles: ['SUPER_ADMIN', 'ADMIN'],
+    fields: [
+      { name: 'title', label: 'Título', maxLength: 180, required: true },
+      {
+        name: 'slug',
+        label: 'Endereço (slug)',
+        maxLength: 180,
+        required: true,
+      },
+      { name: 'subtitle', label: 'Subtítulo', maxLength: 500 },
+      {
+        name: 'content',
+        label: 'Conteúdo',
+        maxLength: 100000,
+        type: 'textarea',
+        rows: 14,
+        describedBy: 'plain-text-help',
+      },
+    ],
   },
   posts: {
     model: 'post',
@@ -14,11 +32,46 @@ export const resources = {
     image: 'featuredImage',
     folder: 'blog',
     roles: ['SUPER_ADMIN', 'ADMIN', 'EDITOR'],
+    fields: [
+      { name: 'title', label: 'Título', maxLength: 180, required: true },
+      {
+        name: 'slug',
+        label: 'Endereço (slug)',
+        maxLength: 180,
+        required: true,
+      },
+      {
+        name: 'summary',
+        label: 'Resumo',
+        maxLength: 500,
+        type: 'textarea',
+        rows: 4,
+        describedBy: 'plain-text-help',
+      },
+      {
+        name: 'content',
+        label: 'Conteúdo',
+        maxLength: 100000,
+        type: 'textarea',
+        rows: 14,
+        required: true,
+        describedBy: 'plain-text-help',
+      },
+    ],
   },
   categories: {
     model: 'category',
     label: 'Categorias',
     roles: ['SUPER_ADMIN', 'ADMIN', 'EDITOR'],
+    fields: [
+      { name: 'name', label: 'Nome', maxLength: 120, required: true },
+      {
+        name: 'slug',
+        label: 'Endereço (slug)',
+        maxLength: 180,
+        required: true,
+      },
+    ],
   },
   'work-areas': {
     model: 'workArea',
@@ -26,6 +79,32 @@ export const resources = {
     image: 'image',
     folder: 'pages',
     roles: ['SUPER_ADMIN', 'ADMIN'],
+    fields: [
+      { name: 'title', label: 'Título', maxLength: 180, required: true },
+      {
+        name: 'slug',
+        label: 'Endereço (slug)',
+        maxLength: 180,
+        required: true,
+      },
+      {
+        name: 'summary',
+        label: 'Resumo',
+        maxLength: 500,
+        type: 'textarea',
+        rows: 4,
+        describedBy: 'plain-text-help',
+      },
+      {
+        name: 'content',
+        label: 'Conteúdo',
+        maxLength: 100000,
+        type: 'textarea',
+        rows: 14,
+        required: true,
+        describedBy: 'plain-text-help',
+      },
+    ],
   },
   gallery: {
     model: 'galleryItem',
@@ -33,6 +112,18 @@ export const resources = {
     image: 'image',
     folder: 'gallery',
     roles: ['SUPER_ADMIN', 'ADMIN', 'EDITOR'],
+    fields: [
+      { name: 'title', label: 'Título', maxLength: 180, required: true },
+      {
+        name: 'description',
+        label: 'Descrição',
+        maxLength: 2000,
+        type: 'textarea',
+        rows: 4,
+        describedBy: 'plain-text-help',
+      },
+      { name: 'category', label: 'Categoria', maxLength: 120 },
+    ],
   },
 };
 export const audit = (db, userId, action, entity, entityId) =>

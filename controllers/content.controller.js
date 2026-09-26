@@ -44,7 +44,7 @@ export const form = async (req, res) => {
     req.resource === 'posts'
       ? await req.app.locals.db.category.findMany({ orderBy: { name: 'asc' } })
       : [];
-  res.render('admin/form', { item, categories });
+  res.render('admin/form', { item, categories, fields: req.spec.fields });
 };
 export const save = async (req, res) => {
   const data = parse(schemas[req.resource], req.body);
