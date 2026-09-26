@@ -1,6 +1,6 @@
-const { test } = require('node:test');
-const assert = require('node:assert/strict');
-const { health } = require('../controllers/health.controller');
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { health } from '../controllers/health.controller.js';
 
 async function check(db) {
   const response = { headers: {} };

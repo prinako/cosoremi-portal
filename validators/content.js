@@ -1,5 +1,6 @@
-const { z } = require('zod');
-const slug = require('../utils/slug');
+import { z } from 'zod';
+import { httpError } from '../utils/http.js';
+import slug from '../utils/slug.js';
 const text = (max, min = 0) =>
   z
     .string()
@@ -20,7 +21,7 @@ const date = z.preprocess((v) => {
 }, z.coerce.date().nullable());
 const slugField = text(180, 1).transform(slug).pipe(text(180, 1));
 const seo = { seoTitle: optional(180), seoDescription: optional(320) };
-exports.schemas = {
+export const schemas = {
   pages: z.object({
     title: text(180, 1),
     slug: slugField,
@@ -60,7 +61,7 @@ exports.schemas = {
     published: bool,
   }),
 };
-exports.subjects = [
+export const subjects = [
   'Assistência jurídica',
   'Documentação',
   'Assistência humanitária',
@@ -69,29 +70,29 @@ exports.subjects = [
   'Emergência',
   'Outro',
 ];
-exports.contact = z.object({
+export const contact = z.object({
   name: text(120, 2),
   email: z.email().max(254),
   phone: optional(30),
   nationality: optional(80),
-  subject: z.enum(exports.subjects),
+  subject: z.enum(subjects),
   message: text(5000, 10),
 });
-exports.login = z.object({
+export const login = z.object({
   email: z
     .email()
     .max(254)
     .transform((v) => v.toLowerCase()),
   password: z.string().min(1).max(200),
 });
-exports.password = z
+export const password = z
   .string()
   .min(12, 'A senha deve ter ao menos 12 caracteres.')
   .refine(
     (v) => Buffer.byteLength(v, 'utf8') <= 72,
     'A senha deve ter no máximo 72 bytes.'
   );
-exports.user = z.object({
+export const user = z.object({
   name: text(120, 2),
   email: z
     .email()
@@ -99,12 +100,11 @@ exports.user = z.object({
     .transform((v) => v.toLowerCase()),
   role: z.enum(['SUPER_ADMIN', 'ADMIN', 'EDITOR']),
   active: bool,
-  password: z.union([z.literal(''), exports.password]).default(''),
+  password: z.union([z.literal(''), password]).default(''),
 });
-exports.parse = (schema, body) => {
+export const parse = (schema, body) => {
   const result = schema.safeParse(body);
   if (!result.success) {
-    const { httpError } = require('../utils/http');
     throw httpError(
       422,
       result.error.issues

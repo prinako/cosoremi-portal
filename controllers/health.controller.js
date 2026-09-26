@@ -1,4 +1,4 @@
-exports.health = async (req, res) => {
+export const health = async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
     await req.app.locals.db.$queryRaw`SELECT 1`;

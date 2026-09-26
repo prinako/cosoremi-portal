@@ -1,8 +1,12 @@
-const settings = require('../services/settings.service');
-const { published } = require('../services/content.service');
-const { parse, contact, subjects } = require('../validators/content');
-const pagination = require('../utils/pagination');
-const { httpError } = require('../utils/http');
+import { published } from '../services/content.service.js';
+import * as settings from '../services/settings.service.js';
+import pagination from '../utils/pagination.js';
+import { httpError } from '../utils/http.js';
+import {
+  contact as contactSchema,
+  parse,
+  subjects,
+} from '../validators/content.js';
 
 const safeColor = (value, fallback) =>
   /^#[0-9a-fA-F]{6}$/.test(value || '') ? value.toLowerCase() : fallback;
@@ -18,7 +22,7 @@ function mixColor(hex, target, amount) {
   return `#${mixed.map((value) => value.toString(16).padStart(2, '0')).join('')}`;
 }
 
-exports.locals = async (req, res, next) => {
+export const locals = async (req, res, next) => {
   const values = await settings.read(req.app.locals.db);
   res.set('Cache-Control', 'no-store, max-age=0');
   Object.assign(res.locals, {
@@ -33,7 +37,7 @@ exports.locals = async (req, res, next) => {
   next();
 };
 
-exports.theme = (req, res) => {
+export const theme = (req, res) => {
   const primary = safeColor(res.locals.settings.primary_color, '#0f5f46');
   const secondary = safeColor(res.locals.settings.secondary_color, '#f5c84b');
 
@@ -68,7 +72,7 @@ function render(res, view, item, extra = {}) {
   });
 }
 
-exports.home = async (req, res) => {
+export const home = async (req, res) => {
   const db = req.app.locals.db;
   const [item, about, areas, posts, gallery] = await Promise.all([
     db.page.findFirst({ where: { slug: 'inicio', published: true } }),
@@ -93,7 +97,7 @@ exports.home = async (req, res) => {
   render(res, 'home', item, { about, areas, posts, gallery });
 };
 
-exports.page = async (req, res) => {
+export const page = async (req, res) => {
   const slug = req.params.slug || req.path.slice(1);
   const item = await req.app.locals.db.page.findFirst({
     where: { slug, published: true },
@@ -102,7 +106,7 @@ exports.page = async (req, res) => {
   render(res, 'institutional', item);
 };
 
-exports.list = (type) => async (req, res) => {
+export const list = (type) => async (req, res) => {
   const config = {
     blog: {
       model: 'post',
@@ -164,7 +168,7 @@ exports.list = (type) => async (req, res) => {
   );
 };
 
-exports.detail = (type) => async (req, res) => {
+export const detail = (type) => async (req, res) => {
   const db = req.app.locals.db;
   const item =
     type === 'blog'
@@ -179,7 +183,7 @@ exports.detail = (type) => async (req, res) => {
   render(res, 'detail', item);
 };
 
-exports.contactForm = async (req, res) => {
+export const contactForm = async (req, res) => {
   const item = await req.app.locals.db.page.findFirst({
     where: { slug: 'contato', published: true },
   });
@@ -187,7 +191,9 @@ exports.contactForm = async (req, res) => {
   render(res, 'contact', item, { subjects, sent: req.query.sent === '1' });
 };
 
-exports.contact = async (req, res) => {
-  await req.app.locals.db.contact.create({ data: parse(contact, req.body) });
+export const contact = async (req, res) => {
+  await req.app.locals.db.contact.create({
+    data: parse(contactSchema, req.body),
+  });
   res.redirect(303, '/contato?sent=1');
 };

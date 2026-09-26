@@ -1,8 +1,10 @@
-const router = require('express').Router();
-const { rateLimit } = require('express-rate-limit');
-const { asyncRoute: wrap } = require('../utils/http');
-const { token, csrf } = require('../middleware/security');
-const c = require('../controllers/public.controller');
+import { Router } from 'express';
+import { rateLimit } from 'express-rate-limit';
+import * as c from '../controllers/public.controller.js';
+import { csrf, token } from '../middleware/security.js';
+import { asyncRoute as wrap } from '../utils/http.js';
+
+const router = Router();
 
 router.use(wrap(c.locals));
 router.get('/theme.css', c.theme);
@@ -28,4 +30,4 @@ router.post(
   wrap(c.contact)
 );
 
-module.exports = router;
+export default router;

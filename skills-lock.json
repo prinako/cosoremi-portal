@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "skills": {
+    "better-accessibility": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/better-accessibility/SKILL.md",
+      "computedHash": "019387b6da56d6f46a7c0f31ca274075a7c2592aed8289b53e89533d068c2d09"
+    },
+    "docker": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "skillPath": "docker/SKILL.md",
+      "computedHash": "b2f646b339642b2597a244b0f508b4712ce0fa7bb3c7ad982e0bd11fddcc5630"
+    },
+    "node-ci": {
+      "source": "paldom/node-skills",
+      "sourceType": "github",
+      "skillPath": "skills/node-ci/SKILL.md",
+      "computedHash": "3500ca4af2505f5313d82562dbcbee62c376a61cd9fb759df2b545f0e5cb4c29"
+    },
+    "node-testing": {
+      "source": "paldom/node-skills",
+      "sourceType": "github",
+      "skillPath": "skills/node-testing/SKILL.md",
+      "computedHash": "72762f676b0fef0a5a4536ffae828e2f0f63d9edb4d672adb48e649954cf96f8"
+    },
+    "postgres-best-practices": {
+      "source": "neondatabase/postgres-skills",
+      "sourceType": "github",
+      "skillPath": "skills/postgres-best-practices/SKILL.md",
+      "computedHash": "f0e9670a035895d50945ca10ed4466513df2c486414c6fcebd3b4e38cc98a88c"
+    },
+    "prisma-client-api": {
+      "source": "prisma/skills",
+      "sourceType": "github",
+      "skillPath": "prisma-client-api/SKILL.md",
+      "computedHash": "cbbabff961c8e16b2d59f8c1ffb4e7e20be52154e778ab95121e0211d6d09969"
+    },
+    "systematic-debugging": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/systematic-debugging/SKILL.md",
+      "computedHash": "3589907ee34dc8b1b7223a33fac98ab841a9e42f9960ab4433a832f0c6f00be0"
+    },
+    "verification-before-completion": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/verification-before-completion/SKILL.md",
+      "computedHash": "b529822bdac4b197b180fe12225cff86b930b65910435103c10622df7f041651"
+    }
+  }
+}

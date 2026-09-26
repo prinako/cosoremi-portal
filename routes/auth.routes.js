@@ -1,8 +1,10 @@
-const router = require('express').Router();
-const { rateLimit } = require('express-rate-limit');
-const { token, csrf } = require('../middleware/security');
-const { asyncRoute } = require('../utils/http');
-const c = require('../controllers/auth.controller');
+import { Router } from 'express';
+import { rateLimit } from 'express-rate-limit';
+import * as c from '../controllers/auth.controller.js';
+import { csrf, token } from '../middleware/security.js';
+import { asyncRoute } from '../utils/http.js';
+
+const router = Router();
 router.get('/login', token, (req, res, next) =>
   req.session.userId ? res.redirect('/admin') : c.form(req, res, next)
 );
@@ -19,4 +21,4 @@ router.post(
   asyncRoute(c.login)
 );
 router.post('/logout', csrf, c.logout);
-module.exports = router;
+export default router;

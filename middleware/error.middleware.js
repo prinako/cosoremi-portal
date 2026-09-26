@@ -1,4 +1,4 @@
-module.exports = (error, req, res, next) => {
+export default (error, req, res, next) => {
   if (res.headersSent) return next(error);
   let status = error.status || 500;
   let message =
