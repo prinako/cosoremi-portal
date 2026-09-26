@@ -5,3 +5,12 @@ prisma/migrations
 .env*
 # EJS partials intentionally span opening/closing HTML tags across files.
 views/
+# Third-party skills are copied verbatim and integrity-tracked in skills-lock.json.
+.agents/skills/better-accessibility/
+.agents/skills/docker/
+.agents/skills/node-ci/
+.agents/skills/node-testing/
+.agents/skills/postgres-best-practices/
+.agents/skills/prisma-client-api/
+.agents/skills/systematic-debugging/
+.agents/skills/verification-before-completion/
