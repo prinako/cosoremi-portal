@@ -48,15 +48,13 @@ export const form = async (req, res) => {
   res.render('admin/form', { item, categories, fields: req.spec.fields });
 };
 export const save = async (req, res) => {
-  const data = normalizeContentSubmission(
-    req.resource,
-    parse(schemas[req.resource], req.body)
-  );
+  const parsed = parse(schemas[req.resource], req.body);
   const existing = req.params.id
     ? await req.app.locals.db[req.spec.model].findUniqueOrThrow({
         where: { id: req.params.id },
       })
     : null;
+  const data = normalizeContentSubmission(req.resource, parsed, existing);
   if (req.file && !req.spec.image)
     throw httpError(422, 'Este tipo de conteúdo não aceita imagens.');
   const image = await upload.save(req.file, req.spec.folder);
