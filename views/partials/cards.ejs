@@ -1,28 +1,40 @@
 <div class="card-grid">
   <% items.forEach(entry => { %>
-    <% if(base) { %><a href="<%= base %>/<%= entry.slug %>">
-  <article class="image-card">
-    <div class="card-image placeholder-image">
-      <% if(entry[field]) { %><img
-        src="<%= entry[field] %>"
-        alt="<%= entry.title %>"
-        loading="lazy"
-        width="600"
-        height="400"
-      /><% } %>
-    </div>
-    <div class="card-body">
-      <h3>
-        <%= entry.title %>
-      </h3>
-      <% if(entry.activityDate) { %><time
-        datetime="<%= entry.activityDate.toISOString() %>"
+  <% if(base) { %><a href="<%= base %>/<%= entry.slug %>">
+    <article class="image-card">
+      <div class="card-image placeholder-image">
+        <% if(entry[field]) { %><img
+          src="<%= entry[field] %>"
+          alt="<%= entry.title %>"
+          loading="lazy"
+          width="600"
+          height="400"
+        /><% } %>
+      </div>
+      <div class="card-body">
+        <% let title = entry.title;
+            let titleLimit = 90;
+        %>
+        <h3>
+          <%= title.length > titleLimit ? title.substring(0,titleLimit) + ' ...': title %>
+        </h3>
+        <% if(entry.activityDate) { %><time
+          datetime="<%= entry.activityDate.toISOString() %>"
         ><%= entry.activityDate.toLocaleDateString('pt-BR', {timeZone:'UTC'})
-        %></time
-      ><% } %>
-      <p><%= entry.summary || entry.description || '' %></p>
-    </div>
-  </article>
+        %></time><% } %>
+        <% 
+        // 1. Get the text
+        let bodyText = entry.summary || entry.description || ''; 
+        // 2. Set your character limit
+        let limit = 200; 
+      %>
+  
+        <!-- 3. Check length, cut if necessary, and add ... -->
+        <p>
+          <%= bodyText.length > limit ? bodyText.substring(0, limit) + ' ...' : bodyText %>
+        </p>
+      </div>
+    </article>
   </a><% } else { %><article class="image-card">
     <div class="card-image placeholder-image">
       <% if(entry[field]) { %><img
@@ -37,10 +49,19 @@
       <h3><%= entry.title %></h3>
       <% if(entry.activityDate) { %><time
         datetime="<%= entry.activityDate.toISOString() %>"
-        ><%= entry.activityDate.toLocaleDateString('pt-BR', {timeZone:'UTC'})
-        %></time
-      ><% } %>
-      <p><%= entry.summary || entry.description || '' %></p>
+      ><%= entry.activityDate.toLocaleDateString('pt-BR', {timeZone:'UTC'})
+        %></time><% } %>
+      <% 
+        // 1. Get the text
+        let bodyText = entry.summary || entry.description || ''; 
+        // 2. Set your character limit
+        let limit = 150; 
+      %>
+  
+      <!-- 3. Check length, cut if necessary, and add ... -->
+      <p>
+        <%= bodyText.length > limit ? bodyText.substring(0, limit) + ' ...' : bodyText %>
+      </p>
     </div>
   </article><% } %>
   <% }) %>
