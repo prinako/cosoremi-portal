@@ -1,7 +1,7 @@
 <%- include('../partials/header') %>
 <article>
   <header class="page-hero">
-    <div class="container">
+    <div class="container blog-content">
       <h1><%= item.title %></h1>
       <p><%= item.summary %></p>
       <% if(item.publishedAt) { %>
@@ -20,12 +20,12 @@
   </header>
   <div class="section container">
     <% if(image) { %><img
-      class="article-image"
+      class="article-image blog-content"
       src="<%= image %>"
       alt="<%= item.title %>"
       loading="lazy"
     /><% } %>
-    <div class="prose rich-content"><%- contentHtml %></div>
+    <div class="prose rich-content blog-content" ><%- contentHtml %></div>
   </div>
 </article>
 <%- include('../partials/footer') %>
