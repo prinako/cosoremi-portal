@@ -7,7 +7,7 @@ const uploader = multer({
     files: 1,
     fields: 30,
     fieldSize: 300000,
-    parts: 35,
+    parts: 32,
   },
 });
 
@@ -20,7 +20,7 @@ const settingsUploader = multer({
     files: 3,
     fields: 30,
     fieldSize: 300000,
-    parts: 32,
+    parts: 35,
   },
 });
 image.settings = settingsUploader.fields([
