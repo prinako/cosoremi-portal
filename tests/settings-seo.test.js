@@ -177,10 +177,7 @@ test('settings form groups editorial SEO and preserves secure image controls', a
     /name="socialImage"[^>]*accept="image\/jpeg,image\/png,image\/webp"/s
   );
   assert.match(html, /name="removeSocialImage"/);
-  assert.match(
-    html,
-    /name="favicon"[^>]*accept="image\/png,image\/jpeg"/s
-  );
+  assert.match(html, /name="favicon"[^>]*accept="image\/png,image\/jpeg"/s);
   assert.match(html, /name="removeFavicon"/);
   assert.match(html, /alt="Favicon atual do site"/);
   assert.match(html, /href|src="\/favicon\.png"/);
@@ -381,7 +378,11 @@ test('transaction failure cleans every new file and preserves old files', async 
   );
   const oldFavicon = await uploads.saveFavicon(await imageFile('favicon'));
   const db = mockDb(
-    { site_logo: oldLogo, default_social_image: oldSocial, site_favicon: oldFavicon },
+    {
+      site_logo: oldLogo,
+      default_social_image: oldSocial,
+      site_favicon: oldFavicon,
+    },
     { fail: true }
   );
   await assert.rejects(
