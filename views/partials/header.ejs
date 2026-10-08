@@ -23,6 +23,9 @@
   <meta name="twitter:image" content="<%= image %>">
   <% } %>
   <link rel="canonical" href="<%= canonicalUrl %>">
+  <% if (settings.site_favicon) { %>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <% } %>
   <% if (structuredData) { %>
   <script type="application/ld+json" nonce="<%= cspNonce %>"><%- structuredData %></script>
   <% } %>
