@@ -53,8 +53,75 @@
     </div>
   </fieldset>
 
+  <fieldset class="seo-settings-panel">
+    <legend>SEO e compartilhamento</legend>
+    <p>
+      Personalize os textos das páginas de listagem. Os mecanismos de busca
+      podem exibir textos diferentes conforme a pesquisa.
+    </p>
+
+    <% [
+      ['blog', 'Blog'],
+      ['work_areas', 'Linhas de trabalho'],
+      ['gallery', 'Galeria']
+    ].forEach(([prefix, label]) => { %>
+    <section class="seo-settings-group" aria-labelledby="<%= prefix %>-seo-heading">
+      <h2 id="<%= prefix %>-seo-heading"><%= label %></h2>
+      <label for="<%= prefix %>_seo_title">Título SEO</label>
+      <input
+        id="<%= prefix %>_seo_title"
+        name="<%= prefix %>_seo_title"
+        maxlength="180"
+        value="<%= values[`${prefix}_seo_title`] || '' %>"
+        aria-describedby="<%= prefix %>-seo-title-help"
+      >
+      <p id="<%= prefix %>-seo-title-help" class="field-help">
+        Deixe em branco para usar o título automático.
+      </p>
+      <label for="<%= prefix %>_seo_description">Descrição SEO</label>
+      <textarea
+        id="<%= prefix %>_seo_description"
+        name="<%= prefix %>_seo_description"
+        rows="3"
+        maxlength="320"
+        aria-describedby="<%= prefix %>-seo-description-help"
+      ><%= values[`${prefix}_seo_description`] || '' %></textarea>
+      <p id="<%= prefix %>-seo-description-help" class="field-help">
+        Deixe em branco para usar a descrição padrão.
+      </p>
+    </section>
+    <% }) %>
+
+    <div class="settings-image">
+      <label for="socialImage">Imagem padrão de compartilhamento</label>
+      <% if (values.default_social_image) { %>
+      <div class="settings-image-preview settings-image-preview--social">
+        <img
+          src="<%= values.default_social_image %>"
+          alt="Imagem padrão atual de compartilhamento"
+        >
+      </div>
+      <label class="checkbox">
+        <input type="checkbox" name="removeSocialImage">
+        Remover imagem padrão atual
+      </label>
+      <% } %>
+      <input
+        id="socialImage"
+        name="socialImage"
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        aria-describedby="social-image-help"
+      >
+      <p id="social-image-help" class="field-help">
+        Usada em compartilhamentos quando a página não possui uma imagem
+        própria. Recomendação: 1200 × 630 px. JPG, PNG ou WebP, até 5 MB.
+      </p>
+    </div>
+  </fieldset>
+
   <% Object.entries(fields).forEach(([key,[label]]) => {
-       if (key === 'primary_color' || key === 'secondary_color') return; %>
+       if (key === 'primary_color' || key === 'secondary_color' || seoFieldKeys.includes(key)) return; %>
     <label for="<%= key %>"><%= label %></label>
     <textarea
       id="<%= key %>"

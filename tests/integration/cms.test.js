@@ -329,6 +329,10 @@ test(
           const form = await admin
             .get(`/admin/${config.resource}/${item.id}/edit`)
             .expect(200);
+          assert.match(form.text, /data-seo-controls/);
+          assert.match(form.text, /data-app-url="http:\/\/localhost:3000"/);
+          assert.match(form.text, /data-character-count="seoTitle"/);
+          assert.match(form.text, /Prévia de busca/);
           assert.match(
             form.headers['content-security-policy'],
             /style-src-attr 'unsafe-inline'/
@@ -502,6 +506,11 @@ test(
         );
         const token = csrf(await admin.get('/admin/settings').expect(200));
         try {
+          const settingsPage = await admin.get('/admin/settings').expect(200);
+          assert.match(settingsPage.text, /SEO e compartilhamento/);
+          assert.match(settingsPage.text, /name="socialImage"/);
+          assert.match(settingsPage.text, /name="blog_seo_title"/);
+
           await admin
             .post('/admin/settings')
             .type('form')
@@ -513,6 +522,81 @@ test(
             .type('form')
             .send({ ...values, instagram: 'javascript:alert(1)', _csrf: token })
             .expect(422);
+
+          const image = await sharp({
+            create: {
+              width: 24,
+              height: 16,
+              channels: 3,
+              background: '#fff',
+            },
+          })
+            .png()
+            .toBuffer();
+          const customized = {
+            ...values,
+            blog_seo_title: `${stamp} notícias`,
+            blog_seo_description: `${stamp} descrição do blog`,
+          };
+          let uploadRequest = admin
+            .post('/admin/settings')
+            .field('_csrf', token);
+          for (const [key, value] of Object.entries(customized))
+            uploadRequest = uploadRequest.field(key, value);
+          await uploadRequest
+            .attach('logo', image, {
+              filename: 'logo.png',
+              contentType: 'image/png',
+            })
+            .attach('socialImage', image, {
+              filename: 'social.png',
+              contentType: 'image/png',
+            })
+            .expect(302);
+          const changed = Object.fromEntries(
+            (await db.setting.findMany()).map((setting) => [
+              setting.key,
+              setting.value,
+            ])
+          );
+          assert.match(
+            changed.site_logo,
+            /^\/uploads\/branding\/[a-f0-9-]+\.webp$/
+          );
+          assert.match(
+            changed.default_social_image,
+            /^\/uploads\/branding\/[a-f0-9-]+\.webp$/
+          );
+          const blog = await request(app).get('/blog').expect(200);
+          assert.match(blog.text, new RegExp(`${stamp} notícias`));
+          assert.match(blog.text, new RegExp(`${stamp} descrição do blog`));
+          assert.match(
+            blog.text,
+            new RegExp(`http://localhost:3000${changed.default_social_image}`)
+          );
+          await request(app).get(changed.site_logo).expect(200);
+          await request(app).get(changed.default_social_image).expect(200);
+
+          await admin
+            .post('/admin/settings')
+            .type('form')
+            .send({
+              ...customized,
+              removeLogo: 'on',
+              removeSocialImage: 'on',
+              _csrf: token,
+            })
+            .expect(302);
+          const removed = Object.fromEntries(
+            (await db.setting.findMany()).map((setting) => [
+              setting.key,
+              setting.value,
+            ])
+          );
+          assert.equal(removed.site_logo, '');
+          assert.equal(removed.default_social_image, '');
+          await request(app).get(changed.site_logo).expect(404);
+          await request(app).get(changed.default_social_image).expect(404);
         } finally {
           await admin
             .post('/admin/settings')

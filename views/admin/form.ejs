@@ -162,7 +162,15 @@
   <% } %>
 
   <% if (['pages', 'posts', 'work-areas'].includes(resource)) { %>
-  <fieldset>
+  <fieldset
+    class="seo-editor"
+    data-seo-controls
+    data-resource="<%= resource %>"
+    data-app-url="<%= seoPreview.appUrl %>"
+    data-site-name="<%= seoPreview.siteName %>"
+    data-site-description="<%= seoPreview.siteDescription %>"
+    data-reserved-page-routes="<%= JSON.stringify(seoPreview.reservedPageRoutes) %>"
+  >
     <legend>Busca e compartilhamento</legend>
     <label for="seoTitle">Título SEO</label>
     <input
@@ -170,14 +178,42 @@
       name="seoTitle"
       maxlength="180"
       value="<%= item.seoTitle || '' %>"
+      aria-describedby="seo-title-help seo-title-count"
+      data-seo-title
     >
+    <p id="seo-title-help" class="field-help">
+      Se ficar vazio, o título da página será usado automaticamente.
+    </p>
+    <p id="seo-title-count" class="character-count" data-character-count="seoTitle">
+      <%= (item.seoTitle || '').length %> / 180
+    </p>
     <label for="seoDescription">Descrição SEO</label>
     <textarea
       id="seoDescription"
       name="seoDescription"
       rows="3"
       maxlength="320"
+      aria-describedby="seo-description-help seo-description-count"
+      data-seo-description
     ><%= item.seoDescription || '' %></textarea>
+    <p id="seo-description-help" class="field-help">
+      Se ficar vazia, o resumo, subtítulo ou descrição padrão do site será
+      usado.
+    </p>
+    <p id="seo-description-count" class="character-count" data-character-count="seoDescription">
+      <%= (item.seoDescription || '').length %> / 320
+    </p>
+
+    <section class="search-preview" aria-labelledby="search-preview-heading">
+      <h2 id="search-preview-heading">Prévia de busca</h2>
+      <p class="field-help">
+        Esta é uma aproximação. Os mecanismos de busca podem exibir textos
+        diferentes.
+      </p>
+      <p class="search-preview__title" data-preview-title><%= seoPreview.title %></p>
+      <p class="search-preview__url" data-preview-url><%= seoPreview.url %></p>
+      <p class="search-preview__description" data-preview-description><%= seoPreview.description %></p>
+    </section>
   </fieldset>
   <% } %>
 
@@ -186,4 +222,7 @@
     <a class="btn" href="/admin/<%= resource %>">Cancelar</a>
   </div>
 </form>
+<% if (['pages', 'posts', 'work-areas'].includes(resource)) { %>
+<script src="/js/admin-seo.js" type="module"></script>
+<% } %>
 <%- include('partials/footer') %>
