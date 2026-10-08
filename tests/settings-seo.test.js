@@ -147,6 +147,7 @@ test('settings form groups editorial SEO and preserves secure image controls', a
       ...settings.defaults,
       ...validBody(),
       site_logo: '/uploads/branding/logo.webp',
+      site_favicon: '/uploads/branding/favicon-test.png',
       default_social_image: '/uploads/branding/social.webp',
     },
     csrf,
@@ -176,18 +177,25 @@ test('settings form groups editorial SEO and preserves secure image controls', a
     /name="socialImage"[^>]*accept="image\/jpeg,image\/png,image\/webp"/s
   );
   assert.match(html, /name="removeSocialImage"/);
+  assert.match(html, /name="favicon"[^>]*accept="image\/png,image\/jpeg"/s);
+  assert.match(html, /name="removeFavicon"/);
+  assert.match(html, /alt="Favicon atual do site"/);
+  assert.match(html, /href|src="\/favicon\.png"/);
+  assert.match(html, /48 × 48 px/);
+  assert.match(html, /até 2 MB/);
   assert.match(html, /alt="Logo atual do site"/);
   assert.match(html, /alt="Imagem padrão atual de compartilhamento"/);
   assert.match(html, /1200 × 630 px/);
 });
 
-test('settings upload handler accepts only one logo and one social image', async () => {
+test('settings upload handler accepts only one logo, social image and favicon', async () => {
   const png = (await imageFile('image')).buffer;
   const app = express();
   app.post('/', upload.settings, (req, res) =>
     res.json({
       logo: req.files.logo?.length || 0,
       socialImage: req.files.socialImage?.length || 0,
+      favicon: req.files.favicon?.length || 0,
     })
   );
   app.use((error, req, res, next) =>
@@ -201,7 +209,7 @@ test('settings upload handler accepts only one logo and one social image', async
         .attach('logo', png, { filename: 'logo.png', contentType: 'image/png' })
         .expect(200)
     ).body,
-    { logo: 1, socialImage: 0 }
+    { logo: 1, socialImage: 0, favicon: 0 }
   );
   assert.deepEqual(
     (
@@ -213,13 +221,29 @@ test('settings upload handler accepts only one logo and one social image', async
         })
         .expect(200)
     ).body,
-    { logo: 0, socialImage: 1 }
+    { logo: 0, socialImage: 1, favicon: 0 }
+  );
+  assert.deepEqual(
+    (
+      await request(app)
+        .post('/')
+        .attach('favicon', png, {
+          filename: 'favicon.png',
+          contentType: 'image/png',
+        })
+        .expect(200)
+    ).body,
+    { logo: 0, socialImage: 0, favicon: 1 }
   );
   await request(app)
     .post('/')
     .attach('logo', png, { filename: 'logo.png', contentType: 'image/png' })
     .attach('socialImage', png, {
       filename: 'social.png',
+      contentType: 'image/png',
+    })
+    .attach('favicon', png, {
+      filename: 'favicon.png',
       contentType: 'image/png',
     })
     .expect(200);
@@ -234,6 +258,11 @@ test('settings upload handler accepts only one logo and one social image', async
     .post('/')
     .attach('logo', png, { filename: 'one.png', contentType: 'image/png' })
     .attach('logo', png, { filename: 'two.png', contentType: 'image/png' })
+    .expect(422);
+  await request(app)
+    .post('/')
+    .attach('favicon', png, { filename: 'one.png', contentType: 'image/png' })
+    .attach('favicon', png, { filename: 'two.png', contentType: 'image/png' })
     .expect(422);
 });
 
@@ -347,8 +376,13 @@ test('transaction failure cleans every new file and preserves old files', async 
     await imageFile('socialImage'),
     'branding'
   );
+  const oldFavicon = await uploads.saveFavicon(await imageFile('favicon'));
   const db = mockDb(
-    { site_logo: oldLogo, default_social_image: oldSocial },
+    {
+      site_logo: oldLogo,
+      default_social_image: oldSocial,
+      site_favicon: oldFavicon,
+    },
     { fail: true }
   );
   await assert.rejects(
@@ -358,6 +392,7 @@ test('transaction failure cleans every new file and preserves old files', async 
         files: {
           logo: [await imageFile('logo')],
           socialImage: [await imageFile('socialImage')],
+          favicon: [await imageFile('favicon')],
         },
         user: { id: 'admin-1' },
         app: { locals: { db } },
@@ -368,11 +403,100 @@ test('transaction failure cleans every new file and preserves old files', async 
   );
   await fs.access(diskPath(oldLogo));
   await fs.access(diskPath(oldSocial));
+  await fs.access(diskPath(oldFavicon));
   await assert.rejects(fs.access(diskPath(db.written.get('site_logo'))));
   await assert.rejects(
     fs.access(diskPath(db.written.get('default_social_image')))
   );
-  await Promise.all([uploads.remove(oldLogo), uploads.remove(oldSocial)]);
+  await assert.rejects(fs.access(diskPath(db.written.get('site_favicon'))));
+  await Promise.all([
+    uploads.remove(oldLogo),
+    uploads.remove(oldSocial),
+    uploads.remove(oldFavicon),
+  ]);
+});
+
+test('favicon processing produces a managed square PNG and rejects unsafe sources', async () => {
+  const favicon = await uploads.saveFavicon(await imageFile('favicon'));
+  assert.match(favicon, /^\/uploads\/branding\/[a-f0-9-]+\.png$/);
+  const metadata = await sharp(diskPath(favicon)).metadata();
+  assert.equal(metadata.format, 'png');
+  assert.equal(metadata.width, 512);
+  assert.equal(metadata.height, 512);
+  await uploads.remove(favicon);
+
+  const webp = await sharp({
+    create: { width: 48, height: 48, channels: 3, background: '#fff' },
+  })
+    .webp()
+    .toBuffer();
+  await assert.rejects(
+    uploads.saveFavicon({
+      originalname: 'favicon.webp',
+      mimetype: 'image/webp',
+      buffer: webp,
+    }),
+    { status: 422 }
+  );
+  await assert.rejects(
+    uploads.saveFavicon({
+      originalname: 'favicon.svg',
+      mimetype: 'image/svg+xml',
+      buffer: Buffer.from('<svg></svg>'),
+    }),
+    { status: 422 }
+  );
+  const tiny = await sharp({
+    create: { width: 7, height: 7, channels: 3, background: '#fff' },
+  })
+    .png()
+    .toBuffer();
+  await assert.rejects(
+    uploads.saveFavicon({
+      originalname: 'favicon.png',
+      mimetype: 'image/png',
+      buffer: tiny,
+    }),
+    { status: 422 }
+  );
+  await assert.rejects(
+    uploads.saveFavicon({
+      originalname: 'favicon.jpg',
+      mimetype: 'image/jpeg',
+      buffer: Buffer.alloc(2 * 1024 * 1024 + 1),
+    }),
+    { status: 422 }
+  );
+});
+
+test('favicon replacement, removal and upload precedence are independent', async () => {
+  const oldFavicon = await uploads.saveFavicon(await imageFile('favicon'));
+  const replacement = await saveSettings({
+    current: { site_favicon: oldFavicon },
+    files: { favicon: [await imageFile('favicon')] },
+  });
+  const nextFavicon = replacement.db.written.get('site_favicon');
+  assert.match(nextFavicon, /^\/uploads\/branding\/[a-f0-9-]+\.png$/);
+  await assert.rejects(fs.access(diskPath(oldFavicon)));
+  await fs.access(diskPath(nextFavicon));
+  await uploads.remove(nextFavicon);
+
+  const removable = await uploads.saveFavicon(await imageFile('favicon'));
+  const removed = await saveSettings({
+    current: { site_favicon: removable },
+    body: { removeFavicon: 'on' },
+  });
+  assert.equal(removed.db.written.get('site_favicon'), '');
+  await assert.rejects(fs.access(diskPath(removable)));
+
+  const precedence = await saveSettings({
+    body: { removeFavicon: 'on' },
+    files: { favicon: [await imageFile('favicon')] },
+  });
+  const uploaded = precedence.db.written.get('site_favicon');
+  assert.match(uploaded, /^\/uploads\/branding\/[a-f0-9-]+\.png$/);
+  await fs.access(diskPath(uploaded));
+  await uploads.remove(uploaded);
 });
 
 test('settings social image remains on the Sharp validation path', async () => {

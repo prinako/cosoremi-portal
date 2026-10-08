@@ -18,6 +18,7 @@ test('branding defaults preserve the COSOREMI palette', () => {
   assert.equal(settings.defaults.primary_color, '#0f5f46');
   assert.equal(settings.defaults.secondary_color, '#f5c84b');
   assert.equal(settings.defaults.site_logo, '');
+  assert.equal(settings.defaults.site_favicon, '');
 });
 
 test('theme stylesheet sanitizes stored color values before rendering', () => {

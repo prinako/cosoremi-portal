@@ -14,8 +14,10 @@ export const save = async (req, res) => {
   const current = await service.read(req.app.locals.db);
   let uploadedLogo;
   let uploadedSocialImage;
+  let uploadedFavicon;
   const removeLogo = req.body.removeLogo === 'on';
   const removeSocialImage = req.body.removeSocialImage === 'on';
+  const removeFavicon = req.body.removeFavicon === 'on';
 
   try {
     uploadedLogo = await uploads.save(req.files?.logo?.[0], 'branding');
@@ -23,11 +25,14 @@ export const save = async (req, res) => {
       req.files?.socialImage?.[0],
       'branding'
     );
+    uploadedFavicon = await uploads.saveFavicon(req.files?.favicon?.[0]);
 
     if (uploadedLogo) data.site_logo = uploadedLogo;
     else if (removeLogo) data.site_logo = '';
     if (uploadedSocialImage) data.default_social_image = uploadedSocialImage;
     else if (removeSocialImage) data.default_social_image = '';
+    if (uploadedFavicon) data.site_favicon = uploadedFavicon;
+    else if (removeFavicon) data.site_favicon = '';
 
     await req.app.locals.db.$transaction(async (tx) => {
       for (const [key, value] of Object.entries(data))
@@ -42,6 +47,7 @@ export const save = async (req, res) => {
     await Promise.all([
       uploads.remove(uploadedLogo),
       uploads.remove(uploadedSocialImage),
+      uploads.remove(uploadedFavicon),
     ]);
     throw error;
   }
@@ -54,6 +60,8 @@ export const save = async (req, res) => {
     current.default_social_image
   )
     await uploads.remove(current.default_social_image);
+  if ((uploadedFavicon || removeFavicon) && current.site_favicon)
+    await uploads.remove(current.site_favicon);
 
   res.redirect('/admin/settings');
 };
