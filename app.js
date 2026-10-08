@@ -34,7 +34,10 @@ export default function createApp({ db, env, sessionStore } = {}) {
     helmet({
       contentSecurityPolicy: {
         directives: {
-          'script-src': ["'self'"],
+          'script-src': [
+            "'self'",
+            (req, res) => `'nonce-${res.locals.cspNonce}'`,
+          ],
           'style-src': [
             "'self'",
             (req, res) => `'nonce-${res.locals.cspNonce}'`,
@@ -50,7 +53,14 @@ export default function createApp({ db, env, sessionStore } = {}) {
     })
   );
   // Readiness must work without sessions, seeded content or rate-limit state.
-  app.get('/health', health);
+  app.get(
+    '/health',
+    (req, res, next) => {
+      res.set('X-Robots-Tag', 'noindex, nofollow');
+      next();
+    },
+    health
+  );
   app.use(
     '/uploads',
     express.static(path.join(import.meta.dirname, 'public/uploads'), {

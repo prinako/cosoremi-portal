@@ -5,15 +5,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="<%= pageDescription %>">
+  <meta name="robots" content="<%= robots %>">
   <meta name="theme-color" content="<%= /^#[0-9a-fA-F]{6}$/.test(settings.primary_color || '') ? settings.primary_color : '#0f5f46' %>">
   <meta property="og:title" content="<%= pageTitle %>">
   <meta property="og:description" content="<%= pageDescription %>">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="<%= currentUrl %>">
+  <meta property="og:type" content="<%= ogType %>">
+  <meta property="og:url" content="<%= canonicalUrl %>">
+  <meta property="og:site_name" content="<%= settings.site_name || 'COSOREMI' %>">
+  <meta property="og:locale" content="pt_BR">
   <% if (image) { %>
-  <meta property="og:image" content="<%= appUrl + image %>">
+  <meta property="og:image" content="<%= image %>">
   <% } %>
-  <link rel="canonical" href="<%= currentUrl %>">
+  <meta name="twitter:card" content="<%= image ? 'summary_large_image' : 'summary' %>">
+  <meta name="twitter:title" content="<%= pageTitle %>">
+  <meta name="twitter:description" content="<%= pageDescription %>">
+  <% if (image) { %>
+  <meta name="twitter:image" content="<%= image %>">
+  <% } %>
+  <link rel="canonical" href="<%= canonicalUrl %>">
+  <% if (structuredData) { %>
+  <script type="application/ld+json" nonce="<%= cspNonce %>"><%- structuredData %></script>
+  <% } %>
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/theme.css?v=<%= encodeURIComponent((settings.primary_color || '') + '-' + (settings.secondary_color || '')) %>">
   <link rel="stylesheet" href="/css/theme-gradients.css">

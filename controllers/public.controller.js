@@ -1,6 +1,15 @@
 import { published } from '../services/content.service.js';
 import { renderRichContent } from '../services/rich-content.service.js';
 import * as settings from '../services/settings.service.js';
+import {
+  absoluteUrl,
+  blogPostingStructuredData,
+  listingUrl,
+  publicMediaUrl,
+  reservedPageRoutes,
+  safeJsonLd,
+  siteStructuredData,
+} from '../services/seo.service.js';
 import pagination from '../utils/pagination.js';
 import { httpError } from '../utils/http.js';
 import {
@@ -37,6 +46,7 @@ const listing = {
     where: published,
     orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
     title: 'Blog e notícias',
+    description: 'Notícias e publicações do COSOREMI.',
     base: '/blog',
     field: 'featuredImage',
   },
@@ -45,6 +55,7 @@ const listing = {
     where: () => ({ active: true }),
     orderBy: [{ displayOrder: 'asc' }, { title: 'asc' }, { id: 'asc' }],
     title: 'Linhas de trabalho',
+    description: 'Conheça as linhas de trabalho do COSOREMI.',
     base: '/linhas-de-trabalho',
     field: 'image',
   },
@@ -56,6 +67,7 @@ const listing = {
       { id: 'desc' },
     ],
     title: 'Galeria de atividades',
+    description: 'Galeria de atividades do COSOREMI.',
     base: '/galeria',
     field: 'image',
   },
@@ -64,13 +76,6 @@ const listing = {
 function requireConfig(config, type) {
   if (!config) throw new TypeError(`Tipo público desconhecido: ${type}`);
   return config;
-}
-
-function listingUrl(appUrl, base, page, category) {
-  const url = new URL(base, appUrl);
-  if (category) url.searchParams.set('category', category);
-  if (page > 1) url.searchParams.set('page', String(page));
-  return url.href;
 }
 
 const safeColor = (value, fallback) =>
@@ -95,7 +100,10 @@ export const locals = async (req, res, next) => {
     pageTitle: values.site_name || 'COSOREMI',
     pageDescription: values.site_description || '',
     image: '',
-    currentUrl: req.app.locals.env.appUrl + req.path,
+    canonicalUrl: absoluteUrl(req.app.locals.env.appUrl, req.path),
+    robots: 'index, follow',
+    ogType: 'website',
+    structuredData: '',
     active: req.path,
     appUrl: req.app.locals.env.appUrl,
   });
@@ -122,8 +130,8 @@ export const theme = (req, res) => {
 };
 
 function render(res, view, item, extra = {}) {
-  res.render(`pages/${view}`, {
-    item,
+  const appUrl = res.locals.appUrl;
+  const metadata = {
     pageTitle:
       item.seoTitle ||
       `${item.title} | ${res.locals.settings.site_name || 'COSOREMI'}`,
@@ -132,13 +140,25 @@ function render(res, view, item, extra = {}) {
       item.summary ||
       item.subtitle ||
       res.locals.pageDescription,
-    image: item.heroImage || item.featuredImage || item.image || '',
+    image: publicMediaUrl(
+      appUrl,
+      item.heroImage || item.featuredImage || item.image || ''
+    ),
+    ...extra.metadata,
+  };
+  const data = {
+    item,
+    ...metadata,
     contentHtml:
       typeof item.content === 'string'
         ? renderRichContent(item.contentBlocks, item.content)
         : '',
     ...extra,
-  });
+  };
+  delete data.metadata;
+  if (extra.structuredData)
+    data.structuredData = safeJsonLd(extra.structuredData(metadata));
+  res.render(`pages/${view}`, data);
 }
 
 export const home = async (req, res) => {
@@ -169,7 +189,20 @@ export const home = async (req, res) => {
     }),
   ]);
   if (!item) throw httpError(404, 'Página não encontrada.');
-  render(res, 'home', item, { about, areas, posts, gallery });
+  render(res, 'home', item, {
+    about,
+    areas,
+    posts,
+    gallery,
+    metadata: { canonicalUrl: absoluteUrl(res.locals.appUrl, '/') },
+    structuredData: () =>
+      siteStructuredData(res.locals.settings, res.locals.appUrl),
+  });
+};
+
+export const canonicalPage = (req, res, next) => {
+  const destination = reservedPageRoutes[req.params.slug];
+  return destination ? res.redirect(308, destination) : next();
 };
 
 export const page = async (req, res) => {
@@ -178,7 +211,14 @@ export const page = async (req, res) => {
     where: { slug, published: true },
   });
   if (!item) throw httpError(404, 'Página não encontrada.');
-  render(res, 'institutional', item);
+  render(res, 'institutional', item, {
+    metadata: {
+      canonicalUrl: absoluteUrl(
+        res.locals.appUrl,
+        reservedPageRoutes[slug] || `/paginas/${encodeURIComponent(slug)}`
+      ),
+    },
+  });
 };
 
 export const list = (type) => async (req, res) => {
@@ -209,6 +249,8 @@ export const list = (type) => async (req, res) => {
   const pages = Math.max(1, Math.ceil(count / take));
   if (page > pages) throw httpError(404, 'Página não encontrada.');
 
+  const siteName = res.locals.settings.site_name || 'COSOREMI';
+  const pageSuffix = page > 1 ? ` — Página ${page}` : '';
   render(
     res,
     'listing',
@@ -223,7 +265,12 @@ export const list = (type) => async (req, res) => {
       pages,
       base: config.base,
       filter: category,
-      currentUrl: listingUrl(res.locals.appUrl, config.base, page, category),
+      metadata: {
+        pageTitle: `${config.title}${pageSuffix} | ${siteName}`,
+        pageDescription: config.description,
+        canonicalUrl: listingUrl(res.locals.appUrl, config.base, page),
+        robots: category ? 'noindex, follow' : 'index, follow',
+      },
     }
   );
 };
@@ -242,7 +289,29 @@ export const detail = (type) => async (req, res) => {
           where: { slug: req.params.slug, active: true },
         });
   if (!item) throw httpError(404, 'Página não encontrada.');
-  render(res, 'detail', item);
+  const pathname =
+    type === 'blog'
+      ? `/blog/${encodeURIComponent(item.slug)}`
+      : `/linhas-de-trabalho/${encodeURIComponent(item.slug)}`;
+  const metadata = {
+    canonicalUrl: absoluteUrl(res.locals.appUrl, pathname),
+    ogType: type === 'blog' ? 'article' : 'website',
+  };
+  const extra = { metadata };
+  if (
+    type === 'blog' &&
+    item.publishedAt &&
+    item.updatedAt &&
+    item.author?.name
+  )
+    extra.structuredData = (resolvedMetadata) =>
+      blogPostingStructuredData(
+        item,
+        resolvedMetadata,
+        res.locals.settings,
+        res.locals.appUrl
+      );
+  render(res, 'detail', item, extra);
 };
 
 export const contactForm = async (req, res) => {
@@ -250,7 +319,11 @@ export const contactForm = async (req, res) => {
     where: { slug: 'contato', published: true },
   });
   if (!item) throw httpError(404, 'Página não encontrada.');
-  render(res, 'contact', item, { subjects, sent: req.query.sent === '1' });
+  render(res, 'contact', item, {
+    subjects,
+    sent: req.query.sent === '1',
+    metadata: { canonicalUrl: absoluteUrl(res.locals.appUrl, '/contato') },
+  });
 };
 
 export const contact = async (req, res) => {
