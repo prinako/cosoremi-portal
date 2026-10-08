@@ -15,7 +15,7 @@ const managers = roles('SUPER_ADMIN', 'ADMIN');
 router.use(authenticate, token);
 router.get('/', wrap(dashboard));
 router.get('/settings', managers, wrap(settings.form));
-router.post('/settings', managers, upload.logo, csrf, wrap(settings.save));
+router.post('/settings', managers, upload.settings, csrf, wrap(settings.save));
 router.get('/users', roles('SUPER_ADMIN'), wrap(users.list));
 router.get('/users/new', roles('SUPER_ADMIN'), wrap(users.form));
 router.get('/users/:id/edit', roles('SUPER_ADMIN'), wrap(users.form));

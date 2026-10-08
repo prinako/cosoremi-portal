@@ -12,6 +12,13 @@ const settings = {
   site_description:
     'Comité de Solidariedade dos Refugiados e Migrantes. Solidariedade, acolhimento e proteção no Pará.',
   site_logo: '',
+  default_social_image: '',
+  blog_seo_title: '',
+  blog_seo_description: '',
+  work_areas_seo_title: '',
+  work_areas_seo_description: '',
+  gallery_seo_title: '',
+  gallery_seo_description: '',
   primary_color: '#0f5f46',
   secondary_color: '#f5c84b',
   phone: '',

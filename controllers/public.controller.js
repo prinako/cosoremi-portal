@@ -4,6 +4,7 @@ import * as settings from '../services/settings.service.js';
 import {
   absoluteUrl,
   blogPostingStructuredData,
+  listingPageTitle,
   listingUrl,
   publicMediaUrl,
   reservedPageRoutes,
@@ -47,6 +48,8 @@ const listing = {
     orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
     title: 'Blog e notícias',
     description: 'Notícias e publicações do COSOREMI.',
+    titleSetting: 'blog_seo_title',
+    descriptionSetting: 'blog_seo_description',
     base: '/blog',
     field: 'featuredImage',
   },
@@ -56,6 +59,8 @@ const listing = {
     orderBy: [{ displayOrder: 'asc' }, { title: 'asc' }, { id: 'asc' }],
     title: 'Linhas de trabalho',
     description: 'Conheça as linhas de trabalho do COSOREMI.',
+    titleSetting: 'work_areas_seo_title',
+    descriptionSetting: 'work_areas_seo_description',
     base: '/linhas-de-trabalho',
     field: 'image',
   },
@@ -68,6 +73,8 @@ const listing = {
     ],
     title: 'Galeria de atividades',
     description: 'Galeria de atividades do COSOREMI.',
+    titleSetting: 'gallery_seo_title',
+    descriptionSetting: 'gallery_seo_description',
     base: '/galeria',
     field: 'image',
   },
@@ -131,6 +138,10 @@ export const theme = (req, res) => {
 
 function render(res, view, item, extra = {}) {
   const appUrl = res.locals.appUrl;
+  const contentImage = publicMediaUrl(
+    appUrl,
+    item.heroImage || item.featuredImage || item.image || ''
+  );
   const metadata = {
     pageTitle:
       item.seoTitle ||
@@ -140,10 +151,9 @@ function render(res, view, item, extra = {}) {
       item.summary ||
       item.subtitle ||
       res.locals.pageDescription,
-    image: publicMediaUrl(
-      appUrl,
-      item.heroImage || item.featuredImage || item.image || ''
-    ),
+    image:
+      contentImage ||
+      publicMediaUrl(appUrl, res.locals.settings.default_social_image),
     ...extra.metadata,
   };
   const data = {
@@ -157,7 +167,9 @@ function render(res, view, item, extra = {}) {
   };
   delete data.metadata;
   if (extra.structuredData)
-    data.structuredData = safeJsonLd(extra.structuredData(metadata));
+    data.structuredData = safeJsonLd(
+      extra.structuredData(metadata, { contentImage })
+    );
   res.render(`pages/${view}`, data);
 }
 
@@ -250,7 +262,9 @@ export const list = (type) => async (req, res) => {
   if (page > pages) throw httpError(404, 'Página não encontrada.');
 
   const siteName = res.locals.settings.site_name || 'COSOREMI';
-  const pageSuffix = page > 1 ? ` — Página ${page}` : '';
+  const listingTitle = res.locals.settings[config.titleSetting] || config.title;
+  const listingDescription =
+    res.locals.settings[config.descriptionSetting] || config.description;
   render(
     res,
     'listing',
@@ -266,8 +280,8 @@ export const list = (type) => async (req, res) => {
       base: config.base,
       filter: category,
       metadata: {
-        pageTitle: `${config.title}${pageSuffix} | ${siteName}`,
-        pageDescription: config.description,
+        pageTitle: listingPageTitle(listingTitle, page, siteName),
+        pageDescription: listingDescription,
         canonicalUrl: listingUrl(res.locals.appUrl, config.base, page),
         robots: category ? 'noindex, follow' : 'index, follow',
       },
@@ -304,12 +318,13 @@ export const detail = (type) => async (req, res) => {
     item.updatedAt &&
     item.author?.name
   )
-    extra.structuredData = (resolvedMetadata) =>
+    extra.structuredData = (resolvedMetadata, { contentImage }) =>
       blogPostingStructuredData(
         item,
         resolvedMetadata,
         res.locals.settings,
-        res.locals.appUrl
+        res.locals.appUrl,
+        contentImage
       );
   render(res, 'detail', item, extra);
 };

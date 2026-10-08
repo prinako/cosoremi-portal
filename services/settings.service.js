@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { parse } from '../validators/content.js';
 
 const short = z.string().trim().max(320);
+const seoTitle = z.string().trim().max(180);
+const seoDescription = z.string().trim().max(320);
 const phone = z
   .string()
   .trim()
@@ -44,12 +46,32 @@ export const fields = {
   emergency_text: ['Informações de emergência', z.string().max(5000)],
   help_cta: ['Botão de ajuda', short.min(1)],
   donate_cta: ['Botão de doação', short.min(1)],
+  blog_seo_title: ['Título SEO do blog', seoTitle],
+  blog_seo_description: ['Descrição SEO do blog', seoDescription],
+  work_areas_seo_title: ['Título SEO das linhas de trabalho', seoTitle],
+  work_areas_seo_description: [
+    'Descrição SEO das linhas de trabalho',
+    seoDescription,
+  ],
+  gallery_seo_title: ['Título SEO da galeria', seoTitle],
+  gallery_seo_description: ['Descrição SEO da galeria', seoDescription],
 };
+
+export const seoFieldKeys = [
+  'blog_seo_title',
+  'blog_seo_description',
+  'work_areas_seo_title',
+  'work_areas_seo_description',
+  'gallery_seo_title',
+  'gallery_seo_description',
+];
 
 export const defaults = {
   primary_color: '#0f5f46',
   secondary_color: '#f5c84b',
   site_logo: '',
+  default_social_image: '',
+  ...Object.fromEntries(seoFieldKeys.map((key) => [key, ''])),
 };
 
 const cache = new WeakMap();

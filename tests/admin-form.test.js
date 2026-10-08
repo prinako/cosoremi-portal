@@ -4,6 +4,11 @@ import { test } from 'node:test';
 import ejs from 'ejs';
 import * as contentController from '../controllers/content.controller.js';
 import { resources } from '../services/content.service.js';
+import {
+  contentPath,
+  previewDescription,
+  previewTitle,
+} from '../public/js/admin-seo.js';
 
 const template = path.join(
   import.meta.dirname,
@@ -107,6 +112,21 @@ const render = (resource, item = {}) =>
     csrf,
     cspNonce: 'editor-style-nonce',
     user,
+    seoPreview: ['pages', 'posts', 'work-areas'].includes(resource)
+      ? {
+          appUrl: 'https://portal.cosoremi.example',
+          siteName: 'COSOREMI',
+          siteDescription: 'Descrição institucional',
+          reservedPageRoutes: { inicio: '/', 'sobre-nos': '/sobre-nos' },
+          title: item.seoTitle || `${item.title || 'Título'} | COSOREMI`,
+          description:
+            item.seoDescription ||
+            item.subtitle ||
+            item.summary ||
+            'Descrição institucional',
+          url: 'https://portal.cosoremi.example/paginas/endereco',
+        }
+      : null,
   });
 
 test('admin resource forms preserve fields for create and edit', async () => {
@@ -211,7 +231,19 @@ test('content controller passes resource field metadata to the view', async () =
       params: {},
       resource: 'pages',
       spec: resources.pages,
-      app: { locals: { db: {} } },
+      app: {
+        locals: {
+          env: { appUrl: 'https://portal.cosoremi.example' },
+          db: {
+            setting: {
+              findMany: async () => [
+                { key: 'site_name', value: 'COSOREMI' },
+                { key: 'site_description', value: 'Descrição do site' },
+              ],
+            },
+          },
+        },
+      },
     },
     {
       render(view, locals) {
@@ -222,4 +254,69 @@ test('content controller passes resource field metadata to the view', async () =
 
   assert.equal(rendered.view, 'admin/form');
   assert.equal(rendered.locals.fields, resources.pages.fields);
+  assert.equal(
+    rendered.locals.seoPreview.appUrl,
+    'https://portal.cosoremi.example'
+  );
+  assert.equal(
+    rendered.locals.seoPreview.url,
+    'https://portal.cosoremi.example/paginas/endereco'
+  );
+});
+
+test('SEO resource forms expose accessible counters and approximate preview data', async () => {
+  for (const resource of ['pages', 'posts', 'work-areas']) {
+    const html = await render(resource, fixtures[resource]);
+    assert.match(html, /data-seo-controls/);
+    assert.match(html, /data-app-url="https:\/\/portal\.cosoremi\.example"/);
+    assert.match(html, new RegExp(`data-resource="${resource}"`));
+    assert.match(html, /data-reserved-page-routes=/);
+    assert.match(
+      html,
+      /id="seoTitle"[^>]*aria-describedby="seo-title-help seo-title-count"/s
+    );
+    assert.match(
+      html,
+      /id="seoDescription"[^>]*aria-describedby="seo-description-help seo-description-count"/s
+    );
+    assert.match(html, /data-character-count="seoTitle"/);
+    assert.match(html, /data-character-count="seoDescription"/);
+    assert.match(html, /Prévia de busca/);
+    assert.match(html, /mecanismos de busca podem exibir textos\s+diferentes/i);
+    assert.match(html, /src="\/js\/admin-seo\.js" type="module"/);
+  }
+  assert.doesNotMatch(
+    await render('gallery', fixtures.gallery),
+    /admin-seo\.js/
+  );
+});
+
+test('SEO preview helpers follow content routes and fallback precedence', () => {
+  const reserved = { inicio: '/', 'sobre-nos': '/sobre-nos' };
+  assert.equal(contentPath('pages', 'inicio', reserved), '/');
+  assert.equal(
+    contentPath('pages', 'customizada', reserved),
+    '/paginas/customizada'
+  );
+  assert.equal(contentPath('posts', 'noticia', reserved), '/blog/noticia');
+  assert.equal(
+    contentPath('work-areas', 'acolhimento', reserved),
+    '/linhas-de-trabalho/acolhimento'
+  );
+  assert.equal(
+    previewTitle('Título SEO', 'Título normal', 'COSOREMI'),
+    'Título SEO'
+  );
+  assert.equal(
+    previewTitle('', 'Título normal', 'COSOREMI'),
+    'Título normal | COSOREMI'
+  );
+  assert.equal(
+    previewDescription('', 'Resumo da publicação', 'Descrição do site'),
+    'Resumo da publicação'
+  );
+  assert.equal(
+    previewDescription('', '', 'Descrição do site'),
+    'Descrição do site'
+  );
 });
