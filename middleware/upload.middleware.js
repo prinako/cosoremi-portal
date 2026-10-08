@@ -7,7 +7,7 @@ const uploader = multer({
     files: 1,
     fields: 30,
     fieldSize: 300000,
-    parts: 32,
+    parts: 35,
   },
 });
 
@@ -17,7 +17,7 @@ const settingsUploader = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024,
-    files: 2,
+    files: 3,
     fields: 30,
     fieldSize: 300000,
     parts: 32,
@@ -26,6 +26,7 @@ const settingsUploader = multer({
 image.settings = settingsUploader.fields([
   { name: 'logo', maxCount: 1 },
   { name: 'socialImage', maxCount: 1 },
+  { name: 'favicon', maxCount: 1 },
 ]);
 
 export default image;
