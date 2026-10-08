@@ -12,6 +12,7 @@ Esta pasta reúne a documentação funcional e técnica do portal. Use a trilha 
 - [Arquitetura](tecnica/arquitetura.md): componentes, fluxo das requisições, dados, segurança e decisões do sistema.
 - [Desenvolvimento e testes](tecnica/desenvolvimento-e-testes.md): instalação, banco, scripts, migrações e validação.
 - [Operação e implantação](tecnica/operacao.md): produção, atualizações, persistência, backups e diagnóstico.
+- [Google Search Console](tecnica/google-search-console.md): publicação do sitemap, verificação DNS e acompanhamento da indexação.
 
 ## Visão geral do produto
 
