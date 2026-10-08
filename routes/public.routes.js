@@ -7,6 +7,8 @@ import { asyncRoute as wrap } from '../utils/http.js';
 
 const router = Router();
 
+router.get('/favicon.png', wrap(seo.favicon));
+router.get('/favicon.ico', wrap(seo.legacyFavicon));
 router.get('/robots.txt', seo.robots);
 router.get('/sitemap.xml', wrap(seo.sitemap));
 router.use(wrap(c.locals));
