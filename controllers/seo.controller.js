@@ -22,7 +22,8 @@ export const favicon = async (req, res) => {
     res.set('Cache-Control', 'public, max-age=86400');
     res.send(buffer);
   } catch (error) {
-    if (error?.code === 'ENOENT') throw httpError(404, 'Favicon não encontrado.');
+    if (error?.code === 'ENOENT')
+      throw httpError(404, 'Favicon não encontrado.');
     throw error;
   }
 };
