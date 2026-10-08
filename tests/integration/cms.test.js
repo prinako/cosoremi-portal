@@ -123,7 +123,41 @@ test(
             response.text,
             /Visite Belém|hero-belem|passwordHash/
           );
+          assert.match(
+            response.text,
+            /<meta name="robots" content="index, follow">/
+          );
+          assert.match(
+            response.text,
+            /<link rel="canonical" href="http:\/\/localhost:3000/
+          );
+          assert.match(response.text, /<meta name="twitter:title"/);
         }
+        const robots = await request(app).get('/robots.txt').expect(200);
+        assert.match(robots.headers['content-type'], /^text\/plain/);
+        assert.match(
+          robots.text,
+          /Sitemap: http:\/\/localhost:3000\/sitemap\.xml/
+        );
+        const sitemap = await request(app).get('/sitemap.xml').expect(200);
+        assert.match(sitemap.headers['content-type'], /application\/xml/);
+        assert.match(sitemap.text, /<loc>http:\/\/localhost:3000\/<\/loc>/);
+        assert.doesNotMatch(sitemap.text, /\/admin|\/health|\?category=/);
+        for (const [slug, destination] of Object.entries({
+          inicio: '/',
+          'sobre-nos': '/sobre-nos',
+          doar: '/doar',
+          emergencia: '/emergencia',
+          contato: '/contato',
+        }))
+          await request(app)
+            .get(`/paginas/${slug}`)
+            .expect(308)
+            .expect('Location', destination);
+        assert.equal(
+          (await request(app).get('/health')).headers['x-robots-tag'],
+          'noindex, nofollow'
+        );
         const area = await db.workArea.findFirst({ where: { active: true } });
         await request(app).get(`/linhas-de-trabalho/${area.slug}`).expect(200);
         await request(app).get('/missing').expect(404);
@@ -136,7 +170,8 @@ test(
           await request(app)
             .get(route)
             .expect(302)
-            .expect('Location', '/admin/login');
+            .expect('Location', '/admin/login')
+            .expect('X-Robots-Tag', 'noindex, nofollow');
         await request(app)
           .post('/admin/posts/new')
           .send({ title: 'forged' })

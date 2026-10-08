@@ -124,6 +124,8 @@ jobs:
           curl --fail --silent --show-error http://localhost:3000/health
           docker compose -f docker-compose.${{ matrix.target }}.yml exec -T app npm run db:seed
           curl --fail --silent --show-error http://localhost:3000/ > /dev/null
+          curl --fail --silent --show-error http://localhost:3000/robots.txt > /dev/null
+          curl --fail --silent --show-error http://localhost:3000/sitemap.xml > /dev/null
       - name: Show diagnostics
         if: failure()
         run: docker compose -f docker-compose.${{ matrix.target }}.yml logs --no-color

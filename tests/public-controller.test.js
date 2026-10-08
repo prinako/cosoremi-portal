@@ -16,7 +16,7 @@ const response = () => ({
   },
 });
 
-test('blog listing uses lean stable queries and a normalized canonical URL', async () => {
+test('blog filters are noindex and pagination keeps a clean self-canonical URL', async () => {
   let findMany;
   const db = {
     post: {
@@ -41,10 +41,9 @@ test('blog listing uses lean stable queries and a normalized canonical URL', asy
   assert.equal(findMany.select.content, undefined);
   assert.deepEqual(findMany.orderBy, [{ publishedAt: 'desc' }, { id: 'desc' }]);
   assert.deepEqual(findMany.where.category, { slug: 'direitos-humanos' });
-  assert.equal(
-    res.data.currentUrl,
-    'https://cosoremi.example/blog?category=direitos-humanos&page=2'
-  );
+  assert.equal(res.data.canonicalUrl, 'https://cosoremi.example/blog?page=2');
+  assert.equal(res.data.robots, 'noindex, follow');
+  assert.equal(res.data.pageTitle, 'Blog e notícias — Página 2 | COSOREMI');
 });
 
 test('gallery listing puts undated items last and rejects missing pages', async () => {
