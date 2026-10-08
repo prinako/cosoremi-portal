@@ -4,6 +4,7 @@ import session from 'express-session';
 import request from 'supertest';
 import createApp from '../app.js';
 import {
+  listingPageTitle,
   safeJsonLd,
   sitemapXml,
   siteStructuredData,
@@ -12,6 +13,18 @@ import {
 const appUrl = 'https://portal.cosoremi.example';
 const updatedAt = new Date('2026-02-03T04:05:06.000Z');
 const publishedAt = new Date('2026-01-02T03:04:05.000Z');
+
+test('listing page titles add pagination before one site-name suffix', () => {
+  assert.equal(
+    listingPageTitle('Notícias | COSOREMI', 2, 'COSOREMI'),
+    'Notícias — Página 2 | COSOREMI'
+  );
+  assert.equal(
+    listingPageTitle('Notícias do COSOREMI', 2, 'COSOREMI'),
+    'Notícias do COSOREMI — Página 2 | COSOREMI'
+  );
+});
+
 const pages = [
   {
     slug: 'inicio',
@@ -82,7 +95,12 @@ const area = {
   updatedAt,
 };
 
-function createDb() {
+function createDb({
+  settingOverrides = {},
+  postItem = post,
+  areaItem = area,
+  pageItems = pages,
+} = {}) {
   return {
     $queryRaw: async () => [{ '?column?': 1 }],
     setting: {
@@ -104,15 +122,23 @@ function createDb() {
           emergency_phone: '',
           help_cta: 'Ajuda',
           donate_cta: 'Doar',
+          default_social_image: '',
+          blog_seo_title: '',
+          blog_seo_description: '',
+          work_areas_seo_title: '',
+          work_areas_seo_description: '',
+          gallery_seo_title: '',
+          gallery_seo_description: '',
+          ...settingOverrides,
         }).map(([key, value]) => ({ key, value })),
     },
     page: {
       findFirst: async ({ where }) =>
-        pages.find((item) => item.slug === where.slug) || null,
+        pageItems.find((item) => item.slug === where.slug) || null,
       findMany: async ({ where, select }) => {
         assert.deepEqual(where, { published: true });
         assert.deepEqual(select, { slug: true, updatedAt: true });
-        return pages.map(({ slug, updatedAt: modified }) => ({
+        return pageItems.map(({ slug, updatedAt: modified }) => ({
           slug,
           updatedAt: modified,
         }));
@@ -122,17 +148,19 @@ function createDb() {
       findMany: async (query) => {
         assert.equal(query.where.status, 'PUBLISHED');
         assert.ok(query.where.publishedAt.lte instanceof Date);
-        return query.take ? [post] : [{ slug: post.slug, updatedAt }];
+        return query.take ? [postItem] : [{ slug: postItem.slug, updatedAt }];
       },
-      findFirst: async ({ where }) => (where.slug === post.slug ? post : null),
+      findFirst: async ({ where }) =>
+        where.slug === postItem.slug ? postItem : null,
       count: async () => 13,
     },
     workArea: {
       findMany: async (query) => {
         assert.deepEqual(query.where, { active: true });
-        return query.take ? [area] : [{ slug: area.slug, updatedAt }];
+        return query.take ? [areaItem] : [{ slug: areaItem.slug, updatedAt }];
       },
-      findFirst: async ({ where }) => (where.slug === area.slug ? area : null),
+      findFirst: async ({ where }) =>
+        where.slug === areaItem.slug ? areaItem : null,
       count: async () => 13,
     },
     galleryItem: {
@@ -143,9 +171,9 @@ function createDb() {
   };
 }
 
-function fixtureApp() {
+function fixtureApp(options) {
   return createApp({
-    db: createDb(),
+    db: createDb(options),
     sessionStore: new session.MemoryStore(),
     env: {
       databaseUrl: 'postgresql://unused.example/test',
@@ -236,6 +264,146 @@ test('pagination is self-canonical and category filters are noindex', async () =
     /rel="canonical" href="https:\/\/portal\.cosoremi\.example\/blog\?page=2"/
   );
   await request(app).get('/blog?page=3').expect(404);
+});
+
+test('listing metadata uses admin overrides and preserves built-in fallbacks', async () => {
+  const customized = fixtureApp({
+    settingOverrides: {
+      blog_seo_title: 'Notícias do COSOREMI',
+      blog_seo_description: 'Acompanhe nossas publicações.',
+      work_areas_seo_title: 'Como atuamos',
+      work_areas_seo_description: 'Conheça nossa atuação.',
+      gallery_seo_title: 'Registros de atividades',
+      gallery_seo_description: 'Veja registros das atividades.',
+    },
+  });
+  for (const [route, title, description] of [
+    [
+      '/blog',
+      'Notícias do COSOREMI | COSOREMI',
+      'Acompanhe nossas publicações.',
+    ],
+    [
+      '/linhas-de-trabalho',
+      'Como atuamos | COSOREMI',
+      'Conheça nossa atuação.',
+    ],
+    [
+      '/galeria',
+      'Registros de atividades | COSOREMI',
+      'Veja registros das atividades.',
+    ],
+  ]) {
+    const response = await request(customized).get(route).expect(200);
+    assert.ok(response.text.includes(`<title>${title}`));
+    assert.ok(
+      response.text.includes(`name="description" content="${description}"`)
+    );
+  }
+  const secondPage = await request(customized).get('/blog?page=2').expect(200);
+  assert.match(
+    secondPage.text,
+    /<title>Notícias do COSOREMI — Página 2 \| COSOREMI/
+  );
+  assert.doesNotMatch(secondPage.text, /COSOREMI \| COSOREMI/);
+
+  const fallback = await request(fixtureApp()).get('/galeria').expect(200);
+  assert.match(fallback.text, /<title>Galeria de atividades \| COSOREMI/);
+  assert.match(
+    fallback.text,
+    /name="description" content="Galeria de atividades do COSOREMI\."/
+  );
+
+  const hostile = await request(
+    fixtureApp({
+      settingOverrides: {
+        blog_seo_title: '</title><script>alert(1)</script>',
+        blog_seo_description: '"><script>alert(1)</script>',
+      },
+    })
+  )
+    .get('/blog')
+    .expect(200);
+  assert.doesNotMatch(hostile.text, /<script>alert\(1\)<\/script>/);
+  assert.match(hostile.text, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+});
+
+test('default social image fills sharing metadata without becoming article data', async () => {
+  const defaultImage = '/uploads/branding/social-default.webp';
+  const app = fixtureApp({
+    settingOverrides: { default_social_image: defaultImage },
+    postItem: { ...post, featuredImage: '' },
+    areaItem: { ...area, image: '' },
+    pageItems: pages.map((item) => ({ ...item, heroImage: '' })),
+  });
+  for (const route of [
+    '/',
+    '/sobre-nos',
+    `/blog/${post.slug}`,
+    `/linhas-de-trabalho/${area.slug}`,
+    '/blog',
+    '/linhas-de-trabalho',
+    '/galeria',
+  ]) {
+    const response = await request(app).get(route).expect(200);
+    const expected = `${appUrl}${defaultImage}`;
+    assert.match(
+      response.text,
+      new RegExp(`property="og:image" content="${expected}"`)
+    );
+    assert.match(
+      response.text,
+      new RegExp(`name="twitter:image" content="${expected}"`)
+    );
+  }
+  const articleResponse = await request(app)
+    .get(`/blog/${post.slug}`)
+    .expect(200);
+  const article = JSON.parse(
+    headValue(
+      articleResponse.text,
+      /<script type="application\/ld\+json" nonce="[^"]+">([\s\S]*?)<\/script>/
+    )
+  );
+  assert.equal(article['@type'], 'BlogPosting');
+  assert.equal(article.image, undefined);
+
+  const homepage = await request(app).get('/').expect(200);
+  const graph = JSON.parse(
+    headValue(
+      homepage.text,
+      /<script type="application\/ld\+json" nonce="[^"]+">([\s\S]*?)<\/script>/
+    )
+  );
+  assert.equal(graph['@graph'][0].logo, `${appUrl}/uploads/branding/logo.webp`);
+});
+
+test('content-specific images take priority over the default sharing image', async () => {
+  const response = await request(
+    fixtureApp({
+      settingOverrides: {
+        default_social_image: '/uploads/branding/social-default.webp',
+      },
+    })
+  )
+    .get(`/blog/${post.slug}`)
+    .expect(200);
+  const expected = `${appUrl}${post.featuredImage}`;
+  assert.match(
+    response.text,
+    new RegExp(`property="og:image" content="${expected}"`)
+  );
+  assert.match(
+    response.text,
+    new RegExp(`name="twitter:image" content="${expected}"`)
+  );
+  const article = JSON.parse(
+    headValue(
+      response.text,
+      /<script type="application\/ld\+json" nonce="[^"]+">([\s\S]*?)<\/script>/
+    )
+  );
+  assert.equal(article.image, expected);
 });
 
 test('reserved page duplicates redirect permanently and custom pages remain public', async () => {

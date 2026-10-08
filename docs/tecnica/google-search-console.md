@@ -26,6 +26,16 @@ As rotas públicas auditadas foram `/`, `/sobre-nos`, `/doar`, `/emergencia`, `/
 - O sitemap lista somente páginas publicadas canônicas, posts publicados cuja data já chegou, linhas de trabalho ativas e as listagens públicas principais. Galeria não recebe URLs de detalhe inexistentes. `lastmod` aparece somente quando vem de `updatedAt` do registro.
 - A página inicial emite `Organization` e `WebSite` com valores institucionais existentes. Posts públicos emitem `BlogPosting`. Propriedades opcionais vazias são omitidas, não há `SearchAction` nem endereço postal inferido, e o JSON-LD é serializado contra quebra do elemento `script`.
 
+## Controles editoriais no CMS
+
+Em **Configurações → SEO e compartilhamento**, administradores podem definir títulos e descrições editoriais para as listagens de Blog, Linhas de trabalho e Galeria. Valores vazios mantêm os textos automáticos seguros da aplicação. Também é possível enviar uma imagem padrão de compartilhamento, processada como WebP pelo mesmo fluxo seguro das imagens de identidade visual.
+
+Nas páginas, publicações e linhas de trabalho, os campos individuais de título e descrição SEO continuam tendo prioridade sobre os fallbacks do conteúdo. A prévia exibida no formulário é apenas aproximada; mecanismos de busca podem selecionar outro texto.
+
+Para Open Graph e Twitter Cards, uma imagem específica do conteúdo tem prioridade sobre a imagem padrão. A imagem genérica pode preencher os metadados de compartilhamento quando o conteúdo não tem imagem, mas não é declarada como imagem de `BlogPosting`. O logo da organização continua separado e vem somente de `site_logo`.
+
+Canonical, index/noindex, `robots.txt`, sitemap, tipos Schema.org, `APP_URL`, redirecionamentos, regras de paginação e filtros continuam controlados pelo código. O CMS não oferece HTML arbitrário, JavaScript, canonical personalizado, edição de robots ou token de verificação do Search Console.
+
 ## Configurar o Search Console depois da implantação
 
 1. Confirme a origem HTTPS implantada em `APP_URL` e abra essa origem no navegador. Verifique também `/robots.txt` e `/sitemap.xml` nessa mesma origem.

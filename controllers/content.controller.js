@@ -9,6 +9,12 @@ import pagination from '../utils/pagination.js';
 import { httpError } from '../utils/http.js';
 import { parse, schemas } from '../validators/content.js';
 import { normalizeContentSubmission } from '../services/rich-content.service.js';
+import * as settings from '../services/settings.service.js';
+import {
+  absoluteUrl,
+  publicContentPath,
+  reservedPageRoutes,
+} from '../services/seo.service.js';
 
 export const context = (req, res, next) => {
   const resource = req.params.resource;
@@ -36,16 +42,44 @@ export const list = async (req, res) => {
   });
 };
 export const form = async (req, res) => {
-  const item = req.params.id
-    ? await req.app.locals.db[req.spec.model].findUniqueOrThrow({
-        where: { id: req.params.id },
-      })
-    : {};
-  const categories =
+  const db = req.app.locals.db;
+  const supportsSeo = ['pages', 'posts', 'work-areas'].includes(req.resource);
+  const [item, categories, siteSettings] = await Promise.all([
+    req.params.id
+      ? db[req.spec.model].findUniqueOrThrow({ where: { id: req.params.id } })
+      : {},
     req.resource === 'posts'
-      ? await req.app.locals.db.category.findMany({ orderBy: { name: 'asc' } })
-      : [];
-  res.render('admin/form', { item, categories, fields: req.spec.fields });
+      ? db.category.findMany({ orderBy: { name: 'asc' } })
+      : [],
+    supportsSeo ? settings.read(db) : {},
+  ]);
+  const siteName = siteSettings.site_name || 'COSOREMI';
+  const fallbackDescription =
+    (req.resource === 'pages' ? item.subtitle : item.summary) ||
+    siteSettings.site_description ||
+    '';
+  const seoPreview = supportsSeo
+    ? {
+        appUrl: req.app.locals.env.appUrl,
+        siteName,
+        siteDescription: siteSettings.site_description || '',
+        reservedPageRoutes,
+        url: absoluteUrl(
+          req.app.locals.env.appUrl,
+          publicContentPath(req.resource, item.slug)
+        ),
+        title:
+          item.seoTitle ||
+          `${item.title || 'Título do conteúdo'} | ${siteName}`,
+        description: item.seoDescription || fallbackDescription,
+      }
+    : null;
+  res.render('admin/form', {
+    item,
+    categories,
+    fields: req.spec.fields,
+    seoPreview,
+  });
 };
 export const save = async (req, res) => {
   const parsed = parse(schemas[req.resource], req.body);

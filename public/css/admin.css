@@ -83,6 +83,46 @@ fieldset {
   gap: 12px;
   border: 1px solid var(--line);
 }
+.seo-editor {
+  margin-top: 12px;
+  padding: 20px;
+  border-radius: var(--radius);
+  background: var(--white);
+}
+.character-count {
+  justify-self: end;
+  margin: -8px 0 4px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+.search-preview {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.search-preview h2 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+.search-preview p {
+  overflow-wrap: anywhere;
+}
+.search-preview__title {
+  margin-bottom: 4px;
+  color: var(--blue-700);
+  font-size: 1.2rem;
+}
+.search-preview__url {
+  margin-block: 4px;
+  color: var(--green-800);
+  font-size: 0.92rem;
+}
+.search-preview__description {
+  margin-top: 4px;
+}
 .form-error {
   background: #ffe8e8;
   color: #851717;

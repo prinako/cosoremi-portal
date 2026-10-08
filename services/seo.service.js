@@ -22,6 +22,17 @@ export function listingUrl(appUrl, pathname, page = 1) {
   return url.href;
 }
 
+export function listingPageTitle(title, page, siteName) {
+  const cleanTitle = title.trim();
+  const suffix = ` | ${siteName}`;
+  const base = cleanTitle
+    .toLocaleLowerCase('pt-BR')
+    .endsWith(suffix.toLocaleLowerCase('pt-BR'))
+    ? cleanTitle.slice(0, -suffix.length)
+    : cleanTitle;
+  return `${base}${page > 1 ? ` — Página ${page}` : ''}${suffix}`;
+}
+
 export function xmlEscape(value) {
   return String(value)
     .replaceAll('&', '&amp;')
@@ -99,7 +110,13 @@ export function siteStructuredData(settings, appUrl) {
   };
 }
 
-export function blogPostingStructuredData(item, metadata, settings, appUrl) {
+export function blogPostingStructuredData(
+  item,
+  metadata,
+  settings,
+  appUrl,
+  articleImage = ''
+) {
   const organizationId = absoluteUrl(appUrl, '/#organization');
   const article = {
     '@context': 'https://schema.org',
@@ -117,7 +134,7 @@ export function blogPostingStructuredData(item, metadata, settings, appUrl) {
       url: absoluteUrl(appUrl, '/'),
     },
   };
-  if (metadata.image) article.image = metadata.image;
+  if (articleImage) article.image = articleImage;
   const logo = publicMediaUrl(appUrl, settings.site_logo);
   if (logo) article.publisher.logo = { '@type': 'ImageObject', url: logo };
   return article;
@@ -125,4 +142,13 @@ export function blogPostingStructuredData(item, metadata, settings, appUrl) {
 
 export function pagePath(slug) {
   return reservedPageRoutes[slug] || `/paginas/${encodeURIComponent(slug)}`;
+}
+
+export function publicContentPath(resource, slug) {
+  const safeSlug = slug || 'endereco';
+  if (resource === 'pages') return pagePath(safeSlug);
+  if (resource === 'posts') return `/blog/${encodeURIComponent(safeSlug)}`;
+  if (resource === 'work-areas')
+    return `/linhas-de-trabalho/${encodeURIComponent(safeSlug)}`;
+  return '/';
 }

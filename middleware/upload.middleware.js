@@ -12,6 +12,20 @@ const uploader = multer({
 });
 
 const image = uploader.single('image');
-image.logo = uploader.single('logo');
+
+const settingsUploader = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 2,
+    fields: 30,
+    fieldSize: 300000,
+    parts: 32,
+  },
+});
+image.settings = settingsUploader.fields([
+  { name: 'logo', maxCount: 1 },
+  { name: 'socialImage', maxCount: 1 },
+]);
 
 export default image;
