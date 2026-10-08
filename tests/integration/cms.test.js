@@ -509,6 +509,7 @@ test(
           const settingsPage = await admin.get('/admin/settings').expect(200);
           assert.match(settingsPage.text, /SEO e compartilhamento/);
           assert.match(settingsPage.text, /name="socialImage"/);
+          assert.match(settingsPage.text, /name="favicon"/);
           assert.match(settingsPage.text, /name="blog_seo_title"/);
 
           await admin
@@ -552,6 +553,10 @@ test(
               filename: 'social.png',
               contentType: 'image/png',
             })
+            .attach('favicon', image, {
+              filename: 'favicon.png',
+              contentType: 'image/png',
+            })
             .expect(302);
           const changed = Object.fromEntries(
             (await db.setting.findMany()).map((setting) => [
@@ -567,6 +572,10 @@ test(
             changed.default_social_image,
             /^\/uploads\/branding\/[a-f0-9-]+\.webp$/
           );
+          assert.match(
+            changed.site_favicon,
+            /^\/uploads\/branding\/[a-f0-9-]+\.png$/
+          );
           const blog = await request(app).get('/blog').expect(200);
           assert.match(blog.text, new RegExp(`${stamp} notícias`));
           assert.match(blog.text, new RegExp(`${stamp} descrição do blog`));
@@ -576,6 +585,18 @@ test(
           );
           await request(app).get(changed.site_logo).expect(200);
           await request(app).get(changed.default_social_image).expect(200);
+          await request(app)
+            .get('/favicon.png')
+            .expect(200)
+            .expect('Content-Type', /image\/png/);
+          await request(app)
+            .get('/favicon.ico')
+            .expect(302)
+            .expect('Location', '/favicon.png');
+          assert.match(
+            (await request(app).get('/').expect(200)).text,
+            /<link rel="icon" type="image\/png" href="\/favicon\.png">/
+          );
 
           await admin
             .post('/admin/settings')
@@ -584,6 +605,7 @@ test(
               ...customized,
               removeLogo: 'on',
               removeSocialImage: 'on',
+              removeFavicon: 'on',
               _csrf: token,
             })
             .expect(302);
@@ -595,8 +617,11 @@ test(
           );
           assert.equal(removed.site_logo, '');
           assert.equal(removed.default_social_image, '');
+          assert.equal(removed.site_favicon, '');
           await request(app).get(changed.site_logo).expect(404);
           await request(app).get(changed.default_social_image).expect(404);
+          await request(app).get('/favicon.png').expect(404);
+          await request(app).get(changed.site_favicon).expect(404);
         } finally {
           await admin
             .post('/admin/settings')

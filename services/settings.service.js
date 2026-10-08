@@ -70,6 +70,7 @@ export const defaults = {
   primary_color: '#0f5f46',
   secondary_color: '#f5c84b',
   site_logo: '',
+  site_favicon: '',
   default_social_image: '',
   ...Object.fromEntries(seoFieldKeys.map((key) => [key, ''])),
 };

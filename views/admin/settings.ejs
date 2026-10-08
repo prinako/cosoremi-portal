@@ -51,6 +51,31 @@
       >
       <p class="branding-help">JPG, PNG ou WebP, até 5 MB. O arquivo é reprocessado com segurança antes de ser publicado.</p>
     </div>
+
+    <div class="settings-image">
+      <label for="favicon">Favicon do site</label>
+      <% if (values.site_favicon) { %>
+      <div class="settings-image-preview">
+        <img src="/favicon.png" alt="Favicon atual do site" width="48" height="48">
+      </div>
+      <label class="checkbox">
+        <input type="checkbox" name="removeFavicon">
+        Remover favicon atual
+      </label>
+      <% } %>
+      <input
+        id="favicon"
+        name="favicon"
+        type="file"
+        accept="image/png,image/jpeg"
+        aria-describedby="favicon-help"
+      >
+      <p id="favicon-help" class="branding-help">
+        Ícone usado nas abas do navegador e que pode aparecer nos resultados de busca.
+        Use uma imagem quadrada; recomendamos pelo menos 48 × 48 px. PNG ou JPG,
+        até 2 MB. O servidor publica uma versão PNG segura.
+      </p>
+    </div>
   </fieldset>
 
   <fieldset class="seo-settings-panel">

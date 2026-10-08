@@ -6,6 +6,7 @@ import { httpError } from '../utils/http.js';
 
 const root = path.join(import.meta.dirname, '..', 'public', 'uploads');
 const allowedFolders = new Set(['blog', 'gallery', 'pages', 'branding']);
+const faviconPattern = /^\/uploads\/branding\/[a-f\d-]+\.png$/;
 
 function uploadStorageError(error) {
   if (error?.code === 'EACCES' || error?.code === 'EROFS')
@@ -71,9 +72,73 @@ export const save = async (file, folder) => {
   return `/uploads/${folder}/${filename}`;
 };
 
+export const saveFavicon = async (file) => {
+  if (!file) return null;
+  if (file.buffer.length > 2 * 1024 * 1024)
+    throw httpError(422, 'O favicon deve ter no máximo 2 MB.');
+
+  const extensions = {
+    'image/jpeg': ['.jpg', '.jpeg'],
+    'image/png': ['.png'],
+  };
+  if (
+    !extensions[file.mimetype]?.includes(
+      path.extname(file.originalname).toLowerCase()
+    )
+  )
+    throw httpError(422, 'Envie um favicon PNG ou JPG.');
+
+  let buffer;
+  try {
+    const source = sharp(file.buffer, {
+      limitInputPixels: 25000000,
+      animated: false,
+    });
+    const metadata = await source.metadata();
+    if (
+      !['jpeg', 'png'].includes(metadata.format) ||
+      !metadata.width ||
+      !metadata.height ||
+      metadata.width < 8 ||
+      metadata.height < 8
+    )
+      throw new Error('Invalid favicon');
+
+    buffer = await source
+      .rotate()
+      .resize(512, 512, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
+      .png({ compressionLevel: 9 })
+      .toBuffer();
+  } catch {
+    throw httpError(
+      422,
+      'O favicon está inválido. Use PNG ou JPG quadrado ou adaptável, com pelo menos 8 × 8 pixels.'
+    );
+  }
+
+  const filename = `${randomUUID()}.png`;
+  try {
+    await fs.mkdir(path.join(root, 'branding'), { recursive: true });
+    await fs.writeFile(path.join(root, 'branding', filename), buffer, {
+      flag: 'wx',
+    });
+  } catch (error) {
+    throw uploadStorageError(error);
+  }
+  return `/uploads/branding/${filename}`;
+};
+
+export const faviconDiskPath = (publicPath) =>
+  faviconPattern.test(publicPath || '')
+    ? path.join(root, publicPath.slice('/uploads/'.length))
+    : null;
+
 export const remove = async (image) => {
   if (
-    !/^\/uploads\/(blog|gallery|pages|branding)\/[a-f\d-]+\.webp$/.test(
+    !/^\/uploads\/(blog|gallery|pages|branding)\/[a-f\d-]+\.(?:webp|png)$/.test(
       image || ''
     )
   )

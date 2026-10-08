@@ -1,4 +1,8 @@
+import fs from 'node:fs/promises';
 import { published } from '../services/content.service.js';
+import * as settings from '../services/settings.service.js';
+import { faviconDiskPath } from '../services/upload.service.js';
+import { httpError } from '../utils/http.js';
 import { absoluteUrl, pagePath, sitemapXml } from '../services/seo.service.js';
 
 export const robots = (req, res) => {
@@ -6,6 +10,29 @@ export const robots = (req, res) => {
   res.type('text/plain; charset=utf-8');
   res.set('Cache-Control', 'public, max-age=300');
   res.send(`User-agent: *\nAllow: /\nDisallow: /health\nSitemap: ${sitemap}\n`);
+};
+
+export const favicon = async (req, res) => {
+  const values = await settings.read(req.app.locals.db);
+  const filePath = faviconDiskPath(values.site_favicon);
+  if (!filePath) throw httpError(404, 'Favicon não configurado.');
+  try {
+    const buffer = await fs.readFile(filePath);
+    res.type('image/png');
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(buffer);
+  } catch (error) {
+    if (error?.code === 'ENOENT') throw httpError(404, 'Favicon não encontrado.');
+    throw error;
+  }
+};
+
+export const legacyFavicon = async (req, res) => {
+  const values = await settings.read(req.app.locals.db);
+  if (!faviconDiskPath(values.site_favicon))
+    throw httpError(404, 'Favicon não configurado.');
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.redirect(302, '/favicon.png');
 };
 
 export const sitemap = async (req, res) => {

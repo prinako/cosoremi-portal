@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import session from 'express-session';
 import request from 'supertest';
+import sharp from 'sharp';
 import createApp from '../app.js';
 import {
   listingPageTitle,
@@ -9,6 +10,7 @@ import {
   sitemapXml,
   siteStructuredData,
 } from '../services/seo.service.js';
+import * as uploads from '../services/upload.service.js';
 
 const appUrl = 'https://portal.cosoremi.example';
 const updatedAt = new Date('2026-02-03T04:05:06.000Z');
@@ -109,6 +111,7 @@ function createDb({
           site_name: 'COSOREMI',
           site_description: '</script><script>alert(1)</script>',
           site_logo: '/uploads/branding/logo.webp',
+          site_favicon: '',
           primary_color: '#0f5f46',
           secondary_color: '#f5c84b',
           institutional_email: 'contato@cosoremi.example',
